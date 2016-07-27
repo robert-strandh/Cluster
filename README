@@ -1,0 +1,13 @@
+Cluster is an assembler (initially for x86 and x86-64) with a
+difference.
+
+People seem to be very opinionated about syntax, and that is true for
+the input syntax to an assembler as well.
+
+To avoid the issue of defining a syntax, the input to Cluster is a
+list of standard instances (i.e., instances of the class
+STANDARD-INSTANCE), as opposed to a character file or S-expressions.
+
+When used as a backend for compilers, it is more convenient to submit
+code to the assembler in this form than to produce (say) S-expressions
+that then need to be parsed.
