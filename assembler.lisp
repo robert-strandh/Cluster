@@ -117,12 +117,12 @@
     :initform nil
     :initarg :base-register
     :reader base-register)
-   ;; An integer or NIL
+   ;; An integer or NIL.
    (%index-register
     :initform nil
     :initarg :index-register
     :reader index-register)
-   ;; 1, 2, 4, 8, or NIL
+   ;; 1, 2, 4, 8, or NIL.
    (%scale
     :initform nil
     :initarg :scale
@@ -264,8 +264,8 @@
 	       (floor base-register 8)
 	     (if (= r/m 4)
 		 `(,rex.b
-		   #b00000100  ; ModR/M byte
-		   #b00100100) ; SIB byte
+		   #b00000100  ; ModR/M byte.
+		   #b00100100) ; SIB byte.
 		 `(,rex.b
 		   ,r/m))))
 	  ((and (null index-register)
@@ -275,8 +275,8 @@
 	       (floor base-register 8)
 	     (if (= r/m 4)
 		 `(,rex.b
-		   #b01000100 ; ModR/M byte
-		   #b00100100 ; SIB byte
+		   #b01000100 ; ModR/M byte.
+		   #b00100100 ; SIB byte.
 		   ,(encode-integer displacement 1))
 		 `(,rex.b
 		   ,(+ #b01000000 r/m)
@@ -288,8 +288,8 @@
 	       (floor base-register 8)
 	     (if (= r/m 4)
 		 `(,rex.b
-		   #b10000100 ; ModR/M byte
-		   #b00100100 ; SIB byte
+		   #b10000100 ; ModR/M byte.
+		   #b00100100 ; SIB byte.
 		   ,(encode-integer displacement 4))
 		 `(,rex.b
 		   ,(+ #b10000000 r/m)
@@ -302,7 +302,7 @@
 	   (multiple-value-bind (rex.x i)
 	       (floor index-register 8)
 	     `(,(ash rex.x 1)
-	       #b00000100 ; ModR/M byte
+	       #b00000100 ; ModR/M byte.
 	       ,(+ (ash (round (log scale 2)) 6)
 		   (ash i 3)
 		   #b101)
@@ -318,13 +318,13 @@
 		   ;; that situation without a displacement.  So we
 		   ;; use a displacement of 0.
 		   `(,(+ (ash rex.x 1) rex.b)
-		     #b01000100 ; ModR/M byte
+		     #b01000100 ; ModR/M byte.
 		     ,(+ (ash (round (log scale 2)) 6)
 			 (ash i 3)
 			 b)
 		     0)
 		   `(,(+ (ash rex.x 1) rex.b)
-		     #b00000100 ; ModR/M byte
+		     #b00000100 ; ModR/M byte.
 		     ,(+ (ash (round (log scale 2)) 6)
 			 (ash i 3)
 			 b))))))
@@ -335,13 +335,13 @@
 		 (floor index-register 8)
 	       (if (typep displacement '(signed-byte 8))
 		   `(,(+ (ash rex.x 1) rex.b)
-		     #b01000100 ; ModR/M byte
+		     #b01000100 ; ModR/M byte.
 		     ,(+ (ash (round (log scale 2)) 6)
 			 (ash i 3)
 			 b)
 		     ,@(encode-integer displacement 1))
 		   `(,(+ (ash rex.x 1) rex.b)
-		     #b10000100 ; ModR/M byte
+		     #b10000100 ; ModR/M byte.
 		     ,(+ (ash (round (log scale 2)) 6)
 			 (ash i 3)
 			 b)
@@ -510,7 +510,7 @@
   (cond ((typep item 'label)
 	 0)
 	((typep item 'data-command)
-	 ;; We have no data commands right now
+	 ;; We have no data commands right now.
 	 (error "can't handle data commands yet"))
 	((typep item 'code-command)
 	 (let* ((operands (operands item))
@@ -541,7 +541,7 @@
   (cond ((typep item 'label)
 	 '())
 	((typep item 'data-command)
-	 ;; We have no data commands right now
+	 ;; We have no data commands right now.
 	 (error "can't handle data commands yet"))
 	((typep item 'code-command)
 	 (let* ((operands (operands item))
