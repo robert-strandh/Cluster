@@ -555,7 +555,6 @@
 	(t
 	 (error "Item of unknown type: ~s" item))))
 
-
 (defun assemble (items)
   (let* ((preliminary-sizes (mapcar #'preliminary-size items))
 	 (addresses (compute-preliminary-addresses items preliminary-sizes)))
