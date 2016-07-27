@@ -64,13 +64,20 @@
 ;;;
 ;;; Items of the list making up a source program.
 
+;;; This is the base class of all items that can occur in the list
+;;; that is submitted to the assembler.
 (defclass item () ())
 
+;;; Instances of this class are used as targets for branch
+;;; instructions.  The identity of a label is not determined by a
+;;; name, but by the Common Lisp definition of identity: EQ.
 (defclass label (item) ())
 
 (defun make-label ()
   (make-instance 'label))
 
+;;; This is the base class of all items that are commands to the
+;;; assembler.
 (defclass command (item) ())
 
 (defclass code-command (command)
