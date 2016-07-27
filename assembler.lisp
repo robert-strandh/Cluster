@@ -194,6 +194,7 @@
 	repeat size
 	collect (ldb (byte 8 position) value)))
 
+;;; Encode an instruction with a single operand.
 (defgeneric encode-instruction-1 (desc opnd))
 
 (defmethod encode-instruction-1 (desc (opnd immediate-operand))
@@ -360,6 +361,7 @@
 	     ,(logior modrm (ash (opcode-extension opnd) 3))
 	     ,@rest)))))))
 
+;;; Encode an instruction with two operands.
 (defgeneric encode-instruction-2 (desc opnd1 opnd2))
 
 (defmethod encode-instruction-2
