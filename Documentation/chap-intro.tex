@@ -2,3 +2,34 @@
 \pagenumbering{arabic}%
 
 \section{Purpose}
+
+\sysname{} is an assembler, but it differs from traditional assemblers
+in some crucial ways:
+
+\begin{itemize}
+\item It does not take a \emph{source file} as its input.  Instead,
+  instructions and labels are represented as \emph{standard
+    instances}.%
+\footnote{Recall that ``a standard instance'' is an instance of (a
+  subclass of) the class named \texttt{standard-instance}.  A standard
+  instance is what you obtain when you call \texttt{make-instance} of
+  a class defined with \texttt{defclass}.}  This way, we avoid the
+problem of having to define an input syntax for instructions.
+\item It does not produce \emph{object code} as output.  Instead, it
+  produces a \commonlisp{} vector of unsigned eight-bit bytes.
+\item There must not be any unresolved references in the program
+  submitted to \sysname{}.  All references to labels must have a
+  corresponding label defined.
+\end{itemize}
+
+\sysname{} is mainly meant to server as a \emph{backend} for
+compilers written in \commonlisp{}, but they can be compilers for any
+language.  With \sysname{}, the compiler does not need to turn
+instructions into surface syntax or S-expressions, only to have the
+assembler parse that output into some internal representation right
+away.  By avoiding this pair of unparsing/parsing step, the
+speed of the compilation process in improved a bit.  But the main
+reason for \sysname{} to avoid surface syntax is that it can easily
+become ambiguous over time, as more types of instructions and operands
+need to be expressed.  It is much easier to extend a \clos{} class to
+handle new situations as the arise.
