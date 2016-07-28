@@ -9,7 +9,6 @@
    (:file "data")
    (:file "assembler")
    (:file "instruction-descriptors")
-   (:file "instruction-database")
    (:file "print")
    (:file "conditions")
    (:file "condition-reporters-english")))
