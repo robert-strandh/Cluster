@@ -6,6 +6,7 @@
   :serial t
   :components
   ((:file "packages")
+   (:file "data")
    (:file "assembler")
    (:file "instruction-descriptors")
    (:file "instruction-database")
