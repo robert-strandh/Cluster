@@ -539,30 +539,33 @@
 	     (setf (gethash item table) absolute-address))
 	finally (return table)))
 
-(defun compute-encoding (item)
-  (cond ((typep item 'label)
-	 '())
-	((typep item 'data-command)
-	 ;; We have no data commands right now.
-	 (error "can't handle data commands yet"))
-	((typep item 'code-command)
-	 (let* ((operands (operands item))
-		(candidates (candidates (mnemonic item) operands)))
-	   (flet ((best-candidate (c1 c2)
-		    (if (and (= (length operands) 1)
-			     (typep (first operands) 'label))
-			(if (> (instruction-size c1 operands)
-			       (instruction-size c2 operands))
-			    c1
-			    c2)
-			(if (< (instruction-size c1 operands)
-			       (instruction-size c2 operands))
-			    c1
-			    c2))))
-	     (encode-instruction (reduce #'best-candidate candidates)
-				 operands))))
-	(t
-	 (error "Item of unknown type: ~s" item))))
+(defgeneric compute-encoding (item))
+
+(defmethod compute-encoding (item)
+  (error "Item of unknown type: ~s" item))
+
+(defmethod compute-encoding ((item label))
+  '())
+
+(defmethod compute-encoding ((item data-command))
+  (error "can't handle data commands yet"))
+
+(defmethod compute-encoding ((item code-command))
+  (let* ((operands (operands item))
+	 (candidates (candidates (mnemonic item) operands)))
+    (flet ((best-candidate (c1 c2)
+	     (if (and (= (length operands) 1)
+		      (typep (first operands) 'label))
+		 (if (> (instruction-size c1 operands)
+			(instruction-size c2 operands))
+		     c1
+		     c2)
+		 (if (< (instruction-size c1 operands)
+			(instruction-size c2 operands))
+		     c1
+		     c2))))
+      (encode-instruction (reduce #'best-candidate candidates)
+			  operands))))
 
 (defun assemble (items)
   (let* ((preliminary-sizes (mapcar #'preliminary-size items))
