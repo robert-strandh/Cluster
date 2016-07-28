@@ -1,0 +1,26 @@
+(cl:in-package #:asdf-user)
+
+(defsystem :cluster-x86-instruction-database
+  :depends-on (:cluster)
+  :serial t
+  :components
+  ((:file "aaa")
+   (:file "aad")
+   (:file "aam")
+   (:file "aas")
+   (:file "adc")
+   (:file "add")
+   (:file "and")
+   (:file "call")
+   (:file "cmp")
+   (:file "jcc")
+   (:file "jmp")
+   (:file "mov")
+   (:file "mul")
+   (:file "or")
+   (:file "pop")
+   (:file "push")
+   (:file "ret")
+   (:file "sbb")
+   (:file "sub")
+   (:file "xor")))
