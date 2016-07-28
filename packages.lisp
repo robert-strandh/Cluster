@@ -8,5 +8,6 @@
    #:make-immediate-operand
    #:make-gpr-operand
    #:make-memory-operand
-   #:assemble))
-
+   #:assemble
+   #:unknown-item
+   #:item))
