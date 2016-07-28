@@ -10,6 +10,5 @@
    (:file "instruction-descriptors")
    (:file "instruction-database")
    (:file "print")
-   (:file "conditions")))
-
-    
+   (:file "conditions")
+   (:file "condition-reporters-english")))
