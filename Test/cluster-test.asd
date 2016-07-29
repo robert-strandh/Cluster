@@ -4,4 +4,4 @@
   :depends-on (:cluster)
   :serial t
   :components
-  ())
+  ((:file "packages")))
