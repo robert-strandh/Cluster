@@ -60,14 +60,6 @@
 
 (defparameter *mode* '64-bit)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Items of the list making up a source program.
-
-;;; This is the base class of all items that can occur in the list
-;;; that is submitted to the assembler.
-(defclass item () ())
-
 ;;; Instances of this class are used as targets for branch
 ;;; instructions.  The identity of a label is not determined by a
 ;;; name, but by the Common Lisp definition of identity: EQ.
