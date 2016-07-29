@@ -6,6 +6,7 @@
   :serial t
   :components
   ((:file "packages")
+   (:file "generic-functions")
    (:file "item")
    (:file "label")
    (:file "command")

@@ -507,11 +507,6 @@
 	     (setf (gethash item table) absolute-address))
 	finally (return table)))
 
-(defgeneric compute-encoding (item))
-
-(defmethod compute-encoding (item)
-  (error "Item of unknown type: ~s" item))
-
 (defmethod compute-encoding ((item label))
   '())
 
