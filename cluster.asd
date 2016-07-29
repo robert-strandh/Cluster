@@ -11,6 +11,7 @@
    (:file "label")
    (:file "command")
    (:file "data")
+   (:file "operand")
    (:file "code")
    (:file "assembler")
    (:file "instruction-descriptors")
