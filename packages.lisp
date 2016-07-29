@@ -3,11 +3,11 @@
 (defpackage #:cluster
   (:use #:common-lisp)
   (:export
-   #:make-label
-   #:make-code-command
-   #:make-immediate-operand
-   #:make-gpr-operand
-   #:make-memory-operand
+   #:label #:make-label
+   #:code-command #:make-code-command
+   #:immediate-operand #:make-immediate-operand
+   #:gpr-operand #:make-gpr-operand
+   #:memory-operand #:make-memory-operand
    #:assemble
    #:unknown-item
    #:item))
