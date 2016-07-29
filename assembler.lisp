@@ -507,9 +507,6 @@
 	     (setf (gethash item table) absolute-address))
 	finally (return table)))
 
-(defmethod compute-encoding ((item data-command))
-  (error "can't handle data commands yet"))
-
 (defmethod compute-encoding ((item code-command))
   (let* ((operands (operands item))
 	 (candidates (candidates (mnemonic item) operands)))
