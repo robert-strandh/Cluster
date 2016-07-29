@@ -8,6 +8,7 @@
   ((:file "packages")
    (:file "item")
    (:file "label")
+   (:file "command")
    (:file "data")
    (:file "assembler")
    (:file "instruction-descriptors")

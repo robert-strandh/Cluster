@@ -60,10 +60,6 @@
 
 (defparameter *mode* '64-bit)
 
-;;; This is the base class of all items that are commands to the
-;;; assembler.
-(defclass command (item) ())
-
 (defclass code-command (command)
   ((%mnemonic :initarg :mnemonic :reader mnemonic)
    (%operands :initarg :operands :reader operands)))
