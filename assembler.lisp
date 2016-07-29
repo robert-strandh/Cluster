@@ -69,9 +69,6 @@
     :mnemonic mnemonic
     :operands operands))
 
-(defclass data-command (command)
-  ())
-
 (defclass operand () ())
 
 (defclass sized-operand (operand)
