@@ -7,3 +7,6 @@
 
 (defun make-label ()
   (make-instance 'label))
+
+(defmethod compute-encoding ((item label))
+  '())

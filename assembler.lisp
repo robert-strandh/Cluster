@@ -507,9 +507,6 @@
 	     (setf (gethash item table) absolute-address))
 	finally (return table)))
 
-(defmethod compute-encoding ((item label))
-  '())
-
 (defmethod compute-encoding ((item data-command))
   (error "can't handle data commands yet"))
 
