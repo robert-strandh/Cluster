@@ -7,6 +7,7 @@
   :components
   ((:file "packages")
    (:file "item")
+   (:file "label")
    (:file "data")
    (:file "assembler")
    (:file "instruction-descriptors")
