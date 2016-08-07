@@ -1,0 +1,19 @@
+\chapter{X86 instruction database}
+
+\sysname contains a database with the description of a significant
+number of instructions.  Each instruction is described by one or more
+occurrences of calls to the macro \texttt{define-instruction}
+described below.  A set of calls is recognized as containing different
+variations on the same instruction by the fact that the required
+parameter \texttt{mnemonic} is the same string for each member of the
+set.
+
+\defmacro define-instruction {mnemonic \key 
+				       modes
+				       operands
+				       opcodes
+				       opcode-extension
+				       encoding
+				       lock
+				       operand-size-override
+				       rex.w}
