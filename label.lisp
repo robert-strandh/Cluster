@@ -10,3 +10,7 @@
 
 (defmethod compute-encoding ((item label))
   '())
+
+;;; When the item is a label, the preliminary size is 0.
+(defmethod preliminary-size ((item label))
+  0)

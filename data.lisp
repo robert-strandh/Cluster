@@ -14,3 +14,6 @@
   (loop for position from 0 by 8
 	repeat size
 	collect (ldb (byte 8 position) value)))
+
+(defmethod preliminary-size ((item data-command))
+  (error "can't handle data commands yet"))

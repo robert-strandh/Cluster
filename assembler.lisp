@@ -270,13 +270,6 @@
     (1 (instruction-size-1 desc (first operands)))
     (2 (instruction-size-2 desc (first operands) (second operands)))))
 
-;;; Take an item and return the preliminary size of that item. When
-;;; the item is a label, the preliminary size is 0.  When the item is
-;;; a CODE-COMMAND and it has a single operand of type LABEL, then the
-;;; preliminary size is the MAXIMUM of the size of each candidate
-;;; instruction.  When the item is a CODE-COMMAND and it has some
-;;; other operands then the preliminary size is the MINIMUM of the
-;;; size of each candidate instruction.
 (defun preliminary-size (item)
   (cond ((typep item 'label)
 	 0)

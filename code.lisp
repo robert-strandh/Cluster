@@ -25,3 +25,19 @@
 		     c2))))
       (encode-instruction (reduce #'best-candidate candidates)
 			  operands))))
+
+;;; When the item is a CODE-COMMAND and it has a single operand of
+;;; type LABEL, then the preliminary size is the MAXIMUM of the size
+;;; of each candidate instruction.  When the item is a CODE-COMMAND
+;;; and it has some other operands then the preliminary size is the
+;;; MINIMUM of the size of each candidate instruction.
+(defmethod preliminary-size ((item code-command))
+  (let* ((operands (operands item))
+	 (candidates (candidates (mnemonic item) operands)))
+    (reduce (if (and (= (length operands) 1)
+		     (typep (first operands) 'label))
+		#'max
+		#'min)
+	    (mapcar (lambda (desc)
+		      (instruction-size desc operands))
+		    candidates))))
