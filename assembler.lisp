@@ -67,9 +67,9 @@
 ;;; the resulting instruction.
 
 ;;; Encode an instruction with a single operand.
-(defgeneric encode-instruction-1 (desc opnd))
+(defgeneric encode-instruction-1 (desc operand))
 
-(defmethod encode-instruction-1 (desc (opnd immediate-operand))
+(defmethod encode-instruction-1 (desc (operand immediate-operand))
   (let ((type (first (encoding desc)))
 	(length (/ (second (first (operands desc))) 8)))
     (ecase type
@@ -78,7 +78,7 @@
 	 `(,@(if (operand-size-override desc) '(#x66) '())
 	   ,@(if rex-p '(#x48) '())
 	   ,@(opcodes desc)
-	   ,@(encode-integer (value opnd) length)))))))
+	   ,@(encode-integer (value operand) length)))))))
 
 ;;; A hash table mapping items to addresses relative to the
 ;;; beginning of the program.
@@ -88,7 +88,7 @@
 ;;; instruction immediately following the one being encoded.
 (defparameter *instruction-pointer* nil)
 
-(defmethod encode-instruction-1 (desc (opnd label))
+(defmethod encode-instruction-1 (desc (operand label))
   (let ((type (first (encoding desc))))
     (ecase type
       (label
@@ -96,47 +96,47 @@
 	 `(,@(if (operand-size-override desc) '(#x66) '())
 	   ,@(if rex-p '(#x48) '())
 	   ,@(opcodes desc)
-	   ,@(encode-integer (- (gethash opnd *addresses*)
+	   ,@(encode-integer (- (gethash operand *addresses*)
 				*instruction-pointer*)
 			     4)))))))
 
-(defmethod encode-instruction-1 (desc (opnd gpr-operand))
+(defmethod encode-instruction-1 (desc (operand gpr-operand))
   (let ((type (first (encoding desc))))
     (ecase type
       (modrm
        `(,@(if (operand-size-override desc) '(#x66) '())
 	 ,@(if (rex.w desc)
-	       (if (>= (code-number opnd) 7)
+	       (if (>= (code-number operand) 7)
 		   '(#b01001001)
 		   '(#b01001000))
-	       (if (>= (code-number opnd) 7)
+	       (if (>= (code-number operand) 7)
 		   '(#b01000001)
 		   '()))
 	 ,@(opcodes desc)
 	 ,(+ #b11000000
 	     (ash (opcode-extension desc) 3)
-	     (mod (code-number opnd) 8)))))))
+	     (mod (code-number operand) 8)))))))
 
-(defmethod encode-instruction-1 (desc (opnd memory-operand))
+(defmethod encode-instruction-1 (desc (operand memory-operand))
   (let ((type (first (encoding desc))))
     (ecase type
       (modrm
        (destructuring-bind (rex.xb modrm &rest rest)
-	   (encode-memory-operand opnd)
-	 (let ((rex-low (+ (if (rex.w opnd) #b1000 0) rex.xb)))
+	   (encode-memory-operand operand)
+	 (let ((rex-low (+ (if (rex.w operand) #b1000 0) rex.xb)))
 	   `(,@(if (operand-size-override desc) '(#x66) '())
 	     ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
 	     ,@(opcodes desc)
-	     ,(logior modrm (ash (opcode-extension opnd) 3))
+	     ,(logior modrm (ash (opcode-extension operand) 3))
 	     ,@rest)))))))
 
 ;;; Encode an instruction with two operands.
-(defgeneric encode-instruction-2 (desc opnd1 opnd2))
+(defgeneric encode-instruction-2 (desc operand1 operand2))
 
 (defmethod encode-instruction-2
-    (desc (opnd1 gpr-operand) (opnd2 immediate-operand))
+    (desc (operand1 gpr-operand) (operand2 immediate-operand))
   (multiple-value-bind (rex.b r/m)
-      (floor (code-number opnd1) 8)
+      (floor (code-number operand1) 8)
     (let* ((rex-low (+ (if (rex.w desc) #b1000 0) rex.b)))
       (let ((type1 (first (encoding desc)))
 	    (type2 (second (encoding desc)))
@@ -148,7 +148,7 @@
 	      `(,@(if (operand-size-override desc) '(#x66) '())
 		,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
 		,@(opcodes desc)
-		,@(encode-integer (value opnd2) length2)))))
+		,@(encode-integer (value operand2) length2)))))
 	  (modrm
 	   (ecase type2
 	     (imm
@@ -158,25 +158,25 @@
 		,(+ (ash #b11 6)
 		    (ash (opcode-extension desc) 3)
 		    r/m)
-		,@(encode-integer (value opnd2) length2)))))
+		,@(encode-integer (value operand2) length2)))))
 	  (+r
 	   (ecase type2
 	     (imm
 	      `(,@(if (operand-size-override desc) '(#x66) '())
 		,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
 		,(+ (car (opcodes desc)) r/m)
-		,@(encode-integer (value opnd2) length2))))))))))
+		,@(encode-integer (value operand2) length2))))))))))
 
 (defmethod encode-instruction-2
-  (desc (opnd1 gpr-operand) (opnd2 gpr-operand))
+  (desc (operand1 gpr-operand) (operand2 gpr-operand))
   (assert (or (equal (encoding desc) '(reg modrm))
 	      (equal (encoding desc) '(modrm reg))))
   (when (equal (encoding desc) '(modrm reg))
-    (rotatef opnd1 opnd2))
+    (rotatef operand1 operand2))
   (multiple-value-bind (rex.b r/m)
-      (floor (code-number opnd2) 8)
+      (floor (code-number operand2) 8)
     (multiple-value-bind (rex.r reg)
-	(floor (code-number opnd1) 8)
+	(floor (code-number operand1) 8)
       (let ((rex-low (+ (if (rex.w desc) #b1000 0)
 			(ash rex.r 2)
 			rex.b)))
@@ -188,12 +188,12 @@
 	      r/m))))))
 
 (defmethod encode-instruction-2
-  (desc (opnd1 gpr-operand) (opnd2 memory-operand))
+  (desc (operand1 gpr-operand) (operand2 memory-operand))
   (assert (equal (encoding desc) '(reg modrm)))
   (destructuring-bind (rex.xb modrm &rest rest)
-      (encode-memory-operand opnd2)
+      (encode-memory-operand operand2)
     (multiple-value-bind (rex.r reg)
-	(floor (code-number opnd1) 8)
+	(floor (code-number operand1) 8)
       (let ((rex-low (+ (if (rex.w desc) #b1000 0)
 			rex.xb
 			(ash rex.r 2))))
@@ -204,26 +204,26 @@
 	  ,@rest)))))
 		      
 (defmethod encode-instruction-2
-  (desc (opnd1 memory-operand) (opnd2 immediate-operand))
+  (desc (operand1 memory-operand) (operand2 immediate-operand))
   (assert (equal (encoding desc) '(modrm imm)))
   (destructuring-bind (rex.xb modrm &rest rest)
-      (encode-memory-operand opnd1)
+      (encode-memory-operand operand1)
     (let ((rex-low (+ (if (rex.w desc) #b1000 0) rex.xb)))
       `(,@(if (operand-size-override desc) '(#x66) '())
 	,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
 	,@(opcodes desc)
 	,(logior modrm (ash (opcode-extension desc) 3))
 	,@rest
-	,@(encode-integer (value opnd2)
+	,@(encode-integer (value operand2)
 			  (/ (second (second (operands desc))) 8))))))
 
 (defmethod encode-instruction-2
-  (desc (opnd1 memory-operand) (opnd2 gpr-operand))
+  (desc (operand1 memory-operand) (operand2 gpr-operand))
   (assert (equal (encoding desc) '(modrm reg)))
   (destructuring-bind (rex.xb modrm &rest rest)
-      (encode-memory-operand opnd1)
+      (encode-memory-operand operand1)
     (multiple-value-bind (rex.r reg)
-	(floor (code-number opnd2) 8)
+	(floor (code-number operand2) 8)
       (let ((rex-low (+ (if (rex.w desc) #b1000 0)
 			rex.xb
 			(ash rex.r 2))))
@@ -245,12 +245,12 @@
 ;;; that the instruction descriptor matches, compute the size of the
 ;;; resulting instruction.
 
-(defgeneric instruction-size-1 (desc opnd))
+(defgeneric instruction-size-1 (desc operand))
 
-(defmethod instruction-size-1 (desc opnd)
-  (length (encode-instruction-1 desc opnd)))
+(defmethod instruction-size-1 (desc operand)
+  (length (encode-instruction-1 desc operand)))
 
-(defmethod instruction-size-1 (desc (opnd label))
+(defmethod instruction-size-1 (desc (operand label))
   (let ((type (first (encoding desc))))
     (ecase type
       (label
@@ -259,10 +259,10 @@
 	  (length (opcodes desc))
 	  (/ (second (first (operands desc))) 8))))))
 
-(defgeneric instruction-size-2 (desc opnd1 opnd2))
+(defgeneric instruction-size-2 (desc operand1 operand2))
 
-(defmethod instruction-size-2 (desc opnd1 opnd2)
-  (length (encode-instruction-2 desc opnd1 opnd2)))
+(defmethod instruction-size-2 (desc operand1 operand2)
+  (length (encode-instruction-2 desc operand1 operand2)))
   
 (defun instruction-size (desc operands)
   (ecase (length operands)
