@@ -270,25 +270,6 @@
     (1 (instruction-size-1 desc (first operands)))
     (2 (instruction-size-2 desc (first operands) (second operands)))))
 
-(defun preliminary-size (item)
-  (cond ((typep item 'label)
-	 0)
-	((typep item 'data-command)
-	 ;; We have no data commands right now.
-	 (error "can't handle data commands yet"))
-	((typep item 'code-command)
-	 (let* ((operands (operands item))
-		(candidates (candidates (mnemonic item) operands)))
-	   (reduce (if (and (= (length operands) 1)
-			    (typep (first operands) 'label))
-		       #'max
-		       #'min)
-		   (mapcar (lambda (desc)
-			     (instruction-size desc operands))
-			   candidates))))
-	(t
-	 (error "Item of unknown type: ~s" item))))
-
 ;;; From a list if items and a list of preliminary sizes, compute a
 ;;; dictionary (represented as a hash table) mapping items to
 ;;; preliminary addresses relative to the beginning of the program.
