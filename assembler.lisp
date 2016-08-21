@@ -60,15 +60,6 @@
 
 (defparameter *mode* '64-bit)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Given an instruction descriptor and the operands to the command
-;;; that the instruction descriptor matches, compute the encoding of
-;;; the resulting instruction.
-
-;;; Encode an instruction with a single operand.
-(defgeneric encode-instruction-1 (desc operand))
-
 (defmethod encode-instruction-1 (desc (operand immediate-operand))
   (let ((type (first (encoding desc)))
 	(length (/ (second (first (operands desc))) 8)))
@@ -129,9 +120,6 @@
 	     ,@(opcodes desc)
 	     ,(logior modrm (ash (opcode-extension operand) 3))
 	     ,@rest)))))))
-
-;;; Encode an instruction with two operands.
-(defgeneric encode-instruction-2 (desc operand1 operand2))
 
 (defmethod encode-instruction-2
     (desc (operand1 gpr-operand) (operand2 immediate-operand))
