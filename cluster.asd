@@ -7,6 +7,7 @@
   :components
   ((:file "packages")
    (:file "generic-functions")
+   (:file "mode")
    (:file "item")
    (:file "label")
    (:file "command")

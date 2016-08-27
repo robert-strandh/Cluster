@@ -47,19 +47,6 @@
 ;;; INSTRUCTION or a sequence of DATA BYTES.  Finally, the resulting
 ;;; sequence of bytes is emitted.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Mode of operation.
-;;; 
-;;; Either 64-bit or 32-bit for now.
-;;;
-;;; At the moment, we do not handle address-size overrides.  As a
-;;; consequence, when the mode is 64-bit, base and index registers
-;;; must be 64-bit registers, and when the mode is 32-bit, base and
-;;; index registers must be 32-bit registers.
-
-(defparameter *mode* '64-bit)
-
 (defmethod encode-instruction-1 (desc (operand immediate-operand))
   (let ((type (first (encoding desc)))
 	(length (/ (second (first (operands desc))) 8)))
