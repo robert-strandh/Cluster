@@ -102,3 +102,109 @@
 	     ,@(opcodes desc)
 	     ,(logior modrm (ash (opcode-extension operand) 3))
 	     ,@rest)))))))
+
+(defmethod encode-instruction-2
+    (desc (operand1 gpr-operand) (operand2 immediate-operand))
+  (multiple-value-bind (rex.b r/m)
+      (floor (code-number operand1) 8)
+    (let* ((rex-low (+ (if (rex.w desc) #b1000 0) rex.b)))
+      (let ((type1 (first (encoding desc)))
+	    (type2 (second (encoding desc)))
+	    (length2 (/ (second (second (operands desc))) 8)))
+	(ecase type1
+	  (-
+	   (ecase type2
+	     (imm
+	      `(,@(if (operand-size-override desc) '(#x66) '())
+		,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+		,@(opcodes desc)
+		,@(encode-integer (value operand2) length2)))))
+	  (modrm
+	   (ecase type2
+	     (imm
+	      `(,@(if (operand-size-override desc) '(#x66) '())
+		,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+		,@(opcodes desc)
+		,(+ (ash #b11 6)
+		    (ash (opcode-extension desc) 3)
+		    r/m)
+		,@(encode-integer (value operand2) length2)))))
+	  (+r
+	   (ecase type2
+	     (imm
+	      `(,@(if (operand-size-override desc) '(#x66) '())
+		,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+		,(+ (car (opcodes desc)) r/m)
+		,@(encode-integer (value operand2) length2))))))))))
+
+(defmethod encode-instruction-2
+  (desc (operand1 gpr-operand) (operand2 gpr-operand))
+  (assert (or (equal (encoding desc) '(reg modrm))
+	      (equal (encoding desc) '(modrm reg))))
+  (when (equal (encoding desc) '(modrm reg))
+    (rotatef operand1 operand2))
+  (multiple-value-bind (rex.b r/m)
+      (floor (code-number operand2) 8)
+    (multiple-value-bind (rex.r reg)
+	(floor (code-number operand1) 8)
+      (let ((rex-low (+ (if (rex.w desc) #b1000 0)
+			(ash rex.r 2)
+			rex.b)))
+	`(,@(if (operand-size-override desc) '(#x66) '())
+	  ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+	  ,@(opcodes desc)
+	  ,(+ #b11000000
+	      (ash reg 3)
+	      r/m))))))
+
+(defmethod encode-instruction-2
+  (desc (operand1 gpr-operand) (operand2 memory-operand))
+  (assert (equal (encoding desc) '(reg modrm)))
+  (destructuring-bind (rex.xb modrm &rest rest)
+      (encode-memory-operand operand2)
+    (multiple-value-bind (rex.r reg)
+	(floor (code-number operand1) 8)
+      (let ((rex-low (+ (if (rex.w desc) #b1000 0)
+			rex.xb
+			(ash rex.r 2))))
+	`(,@(if (operand-size-override desc) '(#x66) '())
+	  ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+	  ,@(opcodes desc)
+	  ,(logior modrm (ash reg 3))
+	  ,@rest)))))
+		      
+(defmethod encode-instruction-2
+  (desc (operand1 memory-operand) (operand2 immediate-operand))
+  (assert (equal (encoding desc) '(modrm imm)))
+  (destructuring-bind (rex.xb modrm &rest rest)
+      (encode-memory-operand operand1)
+    (let ((rex-low (+ (if (rex.w desc) #b1000 0) rex.xb)))
+      `(,@(if (operand-size-override desc) '(#x66) '())
+	,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+	,@(opcodes desc)
+	,(logior modrm (ash (opcode-extension desc) 3))
+	,@rest
+	,@(encode-integer (value operand2)
+			  (/ (second (second (operands desc))) 8))))))
+
+(defmethod encode-instruction-2
+  (desc (operand1 memory-operand) (operand2 gpr-operand))
+  (assert (equal (encoding desc) '(modrm reg)))
+  (destructuring-bind (rex.xb modrm &rest rest)
+      (encode-memory-operand operand1)
+    (multiple-value-bind (rex.r reg)
+	(floor (code-number operand2) 8)
+      (let ((rex-low (+ (if (rex.w desc) #b1000 0)
+			rex.xb
+			(ash rex.r 2))))
+	`(,@(if (operand-size-override desc) '(#x66) '())
+	  ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+	  ,@(opcodes desc)
+	  ,(logior modrm (ash reg 3))
+	  ,@rest)))))
+
+(defun encode-instruction (desc operands)
+  (ecase (length operands)
+    (0 (opcodes desc))
+    (1 (encode-instruction-1 desc (first operands)))
+    (2 (encode-instruction-2 desc (first operands) (second operands)))))
