@@ -41,3 +41,64 @@
 	    (mapcar (lambda (desc)
 		      (instruction-size desc operands))
 		    candidates))))
+
+(defmethod encode-instruction-1 (desc (operand immediate-operand))
+  (let ((type (first (encoding desc)))
+	(length (/ (second (first (operands desc))) 8)))
+    (ecase type
+      (imm
+       (let* ((rex-p (rex.w desc)))
+	 `(,@(if (operand-size-override desc) '(#x66) '())
+	   ,@(if rex-p '(#x48) '())
+	   ,@(opcodes desc)
+	   ,@(encode-integer (value operand) length)))))))
+
+;;; A hash table mapping items to addresses relative to the
+;;; beginning of the program.
+(defparameter *addresses* nil)
+
+;;; The address (relative to the beginning of the program) of the
+;;; instruction immediately following the one being encoded.
+(defparameter *instruction-pointer* nil)
+
+(defmethod encode-instruction-1 (desc (operand label))
+  (let ((type (first (encoding desc))))
+    (ecase type
+      (label
+       (let* ((rex-p (rex.w desc)))
+	 `(,@(if (operand-size-override desc) '(#x66) '())
+	   ,@(if rex-p '(#x48) '())
+	   ,@(opcodes desc)
+	   ,@(encode-integer (- (gethash operand *addresses*)
+				*instruction-pointer*)
+			     4)))))))
+
+(defmethod encode-instruction-1 (desc (operand gpr-operand))
+  (let ((type (first (encoding desc))))
+    (ecase type
+      (modrm
+       `(,@(if (operand-size-override desc) '(#x66) '())
+	 ,@(if (rex.w desc)
+	       (if (>= (code-number operand) 7)
+		   '(#b01001001)
+		   '(#b01001000))
+	       (if (>= (code-number operand) 7)
+		   '(#b01000001)
+		   '()))
+	 ,@(opcodes desc)
+	 ,(+ #b11000000
+	     (ash (opcode-extension desc) 3)
+	     (mod (code-number operand) 8)))))))
+
+(defmethod encode-instruction-1 (desc (operand memory-operand))
+  (let ((type (first (encoding desc))))
+    (ecase type
+      (modrm
+       (destructuring-bind (rex.xb modrm &rest rest)
+	   (encode-memory-operand operand)
+	 (let ((rex-low (+ (if (rex.w operand) #b1000 0) rex.xb)))
+	   `(,@(if (operand-size-override desc) '(#x66) '())
+	     ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+	     ,@(opcodes desc)
+	     ,(logior modrm (ash (opcode-extension operand) 3))
+	     ,@rest)))))))
