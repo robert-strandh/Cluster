@@ -172,7 +172,7 @@
           ,@(opcodes desc)
           ,(logior modrm (ash reg 3))
           ,@rest)))))
-                      
+
 (defmethod encode-instruction-2
   (desc (operand1 memory-operand) (operand2 immediate-operand))
   (assert (equal (encoding desc) '(modrm imm)))
