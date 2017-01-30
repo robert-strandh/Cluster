@@ -2,7 +2,7 @@
 
 (defsystem :cluster
   :depends-on (:split-sequence
-	       :acclimation)
+               :acclimation)
   :serial t
   :components
   ((:file "packages")
