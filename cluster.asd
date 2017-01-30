@@ -1,6 +1,9 @@
 (cl:in-package #:asdf-user)
 
 (defsystem :cluster
+  :description "Assembler without surface syntax"
+  :author "Robert Strandh <robert.strandh@gmail.com>"
+  :license "FreeBSD, see file LICENSE.text"
   :depends-on (:split-sequence
                :acclimation)
   :serial t
