@@ -71,7 +71,7 @@
 
 (defmethod instruction-size-2 (desc operand1 operand2)
   (length (encode-instruction-2 desc operand1 operand2)))
-  
+
 (defun instruction-size (desc operands)
   (ecase (length operands)
     (0 (length (opcodes desc)))
