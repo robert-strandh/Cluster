@@ -9,7 +9,7 @@
 ;;; From the contents of GPR A (destination), subtract an 8-bit
 ;;; immediate value (source) and the contents of the CF flag, and
 ;;; store the result in GPR A.
-;;; 
+;;;
 ;;; Opcodes: 1C
 
 (define-instruction "SBB"
@@ -23,7 +23,7 @@
 ;;; From GPR A (16/32/64) (destination), subtract an immediate value
 ;;; (16/32) (source) and the contents of the CF flag, and store the
 ;;; result in GPR A.
-;;; 
+;;;
 ;;; Opcodes: 1D
 
 ;;; From GPR AX (destination), subtract a 16-bit immediate value
@@ -60,7 +60,7 @@
 ;;; From an 8-bit GPR or memory location (destination), subtract an
 ;;; 8-bit immediate value (source) and the contents of the CF flag,
 ;;; and store the result in the destination.
-;;; 
+;;;
 ;;; Opcodes: 80
 ;;; Opcode extension: 3
 
