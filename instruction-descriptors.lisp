@@ -1,7 +1,7 @@
 (in-package :cluster)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; 
+;;;
 ;;; Instruction descriptor.
 
 (defclass instruction-descriptor ()
@@ -45,35 +45,35 @@
 
 (defun add-instruction-descriptor (instruction-descriptor)
   (push instruction-descriptor
-	(gethash (mnemonic instruction-descriptor)
-		 *instruction-descriptors*)))
+        (gethash (mnemonic instruction-descriptor)
+                 *instruction-descriptors*)))
 
 (defun candidates (mnemonic operands)
   (loop for descriptor in (gethash mnemonic *instruction-descriptors*)
-	when (operands-match-p operands (operands descriptor))
-	  collect descriptor))
+        when (operands-match-p operands (operands descriptor))
+          collect descriptor))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Macro DEFINE-INSTRUCTION.
 
 (defmacro define-instruction (mnemonic &key
-				       modes
-				       operands
-				       opcodes
-				       opcode-extension
-				       encoding
-				       lock
-				       operand-size-override
-				       rex.w)
+                                       modes
+                                       operands
+                                       opcodes
+                                       opcode-extension
+                                       encoding
+                                       lock
+                                       operand-size-override
+                                       rex.w)
   `(push (make-instance 'instruction-descriptor
-	   :mnemonic ,mnemonic
-	   :modes ',modes
-	   :operands ',operands
-	   :opcodes ',opcodes
-	   :opcode-extension ,opcode-extension
-	   :encoding ',encoding
-	   :lock ,lock
-	   :operand-size-override ,operand-size-override
-	   :rex.w ,rex.w)
-	 (gethash ,mnemonic *instruction-descriptors*)))
+           :mnemonic ,mnemonic
+           :modes ',modes
+           :operands ',operands
+           :opcodes ',opcodes
+           :opcode-extension ,opcode-extension
+           :encoding ',encoding
+           :lock ,lock
+           :operand-size-override ,operand-size-override
+           :rex.w ,rex.w)
+         (gethash ,mnemonic *instruction-descriptors*)))
