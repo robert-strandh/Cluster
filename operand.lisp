@@ -189,4 +189,3 @@
 (defun operands-match-p (operands descriptors)
   (and (= (length operands) (length descriptors))
        (every #'operand-matches-p operands descriptors)))
-
