@@ -63,9 +63,9 @@
     (ecase type
       (label
        (+ (if (operand-size-override desc) 1 0)
-	  (if (rex.w desc) 1 0)
-	  (length (opcodes desc))
-	  (/ (second (first (operands desc))) 8))))))
+          (if (rex.w desc) 1 0)
+          (length (opcodes desc))
+          (/ (second (first (operands desc))) 8))))))
 
 (defgeneric instruction-size-2 (desc operand1 operand2))
 
@@ -83,22 +83,22 @@
 ;;; preliminary addresses relative to the beginning of the program.
 (defun compute-preliminary-addresses (items preliminary-sizes)
   (loop with table = (make-hash-table :test #'eq)
-	for absolute-address = 0 then (+ absolute-address size)
-	for size in preliminary-sizes
-	for item in items
-	do (when (typep item 'label)
-	     (setf (gethash item table) absolute-address))
-	finally (return table)))
+        for absolute-address = 0 then (+ absolute-address size)
+        for size in preliminary-sizes
+        for item in items
+        do (when (typep item 'label)
+             (setf (gethash item table) absolute-address))
+        finally (return table)))
 
 (defun assemble (items)
   (let* ((preliminary-sizes (mapcar #'preliminary-size items))
-	 (addresses (compute-preliminary-addresses items preliminary-sizes)))
+         (addresses (compute-preliminary-addresses items preliminary-sizes)))
     (let* ((*addresses* addresses)
-	   (encodings (loop for item in items
-			    for address = 0 then (+ address size)
-			    for size in preliminary-sizes
-			    collect
-			    (let ((*instruction-pointer* (+ address size)))
-			      (compute-encoding item)))))
+           (encodings (loop for item in items
+                            for address = 0 then (+ address size)
+                            for size in preliminary-sizes
+                            collect
+                            (let ((*instruction-pointer* (+ address size)))
+                              (compute-encoding item)))))
       (coerce (reduce #'append encodings :from-end t)
-	      '(simple-array (unsigned-byte 8) (*))))))
+              '(simple-array (unsigned-byte 8) (*))))))
