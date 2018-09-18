@@ -9,10 +9,10 @@ differs from traditional assemblers in some crucial ways:
 \begin{itemize}
 \item It does not take a \emph{source file} as its input.  Instead,
   instructions and labels are represented as \emph{standard
-    instances}.%
-\footnote{Recall that ``a standard instance'' is an instance of (a
-  subclass of) the class named \texttt{standard-instance}.  A standard
-  instance is what you obtain when you call \texttt{make-instance} of
+    objects}.%
+\footnote{Recall that ``a standard object is an instance of (a
+  subclass of) the class named \texttt{standard-object}.  A standard
+  object is what you obtain when you call \texttt{make-instance} of
   a class defined with \texttt{defclass}.}  This way, we avoid the
 problem of having to define an input syntax for instructions.
 \item It does not produce \emph{object code} as output.  Instead, it
