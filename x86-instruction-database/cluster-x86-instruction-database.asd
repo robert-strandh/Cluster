@@ -23,4 +23,5 @@
    (:file "ret")
    (:file "sbb")
    (:file "sub")
+   (:file "syscall")
    (:file "xor")))
