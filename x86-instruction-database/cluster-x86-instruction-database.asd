@@ -23,6 +23,7 @@
    (:file "ret")
    (:file "sbb")
    (:file "sal")
+   (:file "sar")
    (:file "shl")
    (:file "sub")
    (:file "syscall")
