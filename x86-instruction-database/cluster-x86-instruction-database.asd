@@ -22,6 +22,7 @@
    (:file "push")
    (:file "ret")
    (:file "sbb")
+   (:file "shl")
    (:file "sub")
    (:file "syscall")
    (:file "xor")))
