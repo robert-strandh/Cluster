@@ -25,6 +25,7 @@
    (:file "sal")
    (:file "sar")
    (:file "shl")
+   (:file "shr")
    (:file "sub")
    (:file "syscall")
    (:file "xor")))
