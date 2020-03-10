@@ -17,6 +17,7 @@
    (:file "jmp")
    (:file "mov")
    (:file "mul")
+   (:file "neg")
    (:file "or")
    (:file "pop")
    (:file "push")
