@@ -23,7 +23,7 @@
 ;;; 8-bit GPR (source).
 (define-instruction "MOV"
   :modes (32 64)
-  :operands ((memory 8) (reg 8))
+  :operands ((memory 8) (gpr 8))
   :opcodes (#x88)
   :encoding (modrm reg))
 
