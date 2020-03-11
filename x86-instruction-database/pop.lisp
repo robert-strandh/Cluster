@@ -30,7 +30,7 @@
 ;;; stack.
 (define-instruction "POP"
   :modes (32 64)
-  :operands ((mem 16))
+  :operands ((memory 16))
   :opcodes (#x8F)
   :opcode-extension 0
   :encoding (modrm)
@@ -53,7 +53,7 @@
 ;;; stack.
 (define-instruction "POP"
   :modes (32)
-  :operands ((mem 32))
+  :operands ((memory 32))
   :opcodes (#x8F)
   :opcode-extension 0
   :encoding (modrm))
@@ -75,7 +75,7 @@
 ;;; stack.
 (define-instruction "POP"
   :modes (64)
-  :operands ((mem 64))
+  :operands ((memory 64))
   :opcodes (#x8F)
   :opcode-extension 0
   :encoding (modrm))
