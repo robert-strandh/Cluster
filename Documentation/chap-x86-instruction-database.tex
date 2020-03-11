@@ -26,3 +26,17 @@ This key to understanding this description is given in section 3.1 in
 the Intel manuals.  Here, we give a more direct description of the
 correspondence between the Intel reference pages and the arguments
 that should be supplied to the \texttt{define-instruction} macro.
+
+\subsection{Opcodes}
+
+The \texttt{define-instruction} macro has a keyword argument
+\texttt{:opcodes}.  This argument should be a list of unsigned octets.
+It is preferable to use hexadecimal notation for the opcodes.  The
+Intel instruction reference pages contain a column labeled either
+``Opcode'' or ``Opcode/Instruction''.  The opcodes are indicated in
+that column as a sequence of hexadecimal values, sometimes followed by
+``/n'' (where n is a small non-negative integer) or ``/r''.
+
+Sometimes, the list of opcodes is preceded by ``REX.W+''.  When that
+is the case, the \texttt{:rex.w} keyword argument should be provided,
+with a value of \texttt{t}.
