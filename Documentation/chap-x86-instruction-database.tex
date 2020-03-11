@@ -72,7 +72,9 @@ It is preferable to use hexadecimal notation for the opcodes.  The
 Intel instruction reference pages contain a column labeled either
 ``Opcode'' or ``Opcode/Instruction''.  The opcodes are indicated in
 that column as a sequence of hexadecimal values, sometimes followed by
-``/n'' (where n is a small non-negative integer) or ``/r''.
+``/n'' (where n is a small non-negative integer) or ``/r''.  The
+occurrence of ``/r'' does not need to be encoded in the
+\texttt{define-instruction} form.
 
 Sometimes, the list of opcodes is preceded by ``REX.W+''.  When that
 is the case, the \texttt{:rex.w} keyword argument should be provided,
