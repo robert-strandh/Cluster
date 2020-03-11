@@ -27,6 +27,43 @@ the Intel manuals.  Here, we give a more direct description of the
 correspondence between the Intel reference pages and the arguments
 that should be supplied to the \texttt{define-instruction} macro.
 
+\subsection{Operands}
+
+The \texttt{define-instruction} macro has a keyword argument
+\texttt{:operands}.  The argument should be a list of possible
+operands.  Valid operands are:
+
+\begin{itemize}
+\item (gpr-a 8).  The lower 8 bits of register A, also referred to as AL.
+\item (gpr-a 16).  The 16-bit register AX.
+\item (gpr-a 32).  The 32-bit register EAX.
+\item (gpr-a 64).  The 64-bit register RAX.
+\item (gpr 8).  Any 8-bit register.
+\item (gpr 16).  Any 16-bit register.
+\item (gpr 32).  Any 32-bit register.
+\item (gpr 64).  Any 64-bit register.
+\item (imm 8).  An 8-bit immediate operand.
+\item (simm 8).  An 8-bit immediate operand, sign extended to the size
+  of the other operand.  This operand can occur only as the second of
+  two operands where the first operand has a size that is greater than
+  8 bits.
+\item (imm 16).  A 16-bit immediate operand.
+\item (simm 16).  A 16-bit immediate operand, sign extended to the size
+  of the other operand.  This operand can occur only as the second of
+  two operands where the first operand has a size that is greater than
+  16 bits.
+\item (imm 32).  A 32-bit immediate operand.
+\item (simm 32).  A 32-bit immediate operand, sign extended to the size
+  of the other operand.  This operand can occur only as the second of
+  two operands where the first operand has a size that is greater than
+  32 bits.
+\item (imm 64).  A 64-bit immediate operand.
+\item (memory 8).  An 8-bit memory operand.
+\item (memory 16).  A 16-bit memory operand.
+\item (memory 32).  A 32-bit memory operand.
+\item (memory 64).  A 64-bit memory operand.
+\end{itemize}
+
 \subsection{Opcodes}
 
 The \texttt{define-instruction} macro has a keyword argument
