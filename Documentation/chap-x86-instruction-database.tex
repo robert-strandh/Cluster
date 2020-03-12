@@ -79,3 +79,23 @@ occurrence of ``/r'' does not need to be encoded in the
 Sometimes, the list of opcodes is preceded by ``REX.W+''.  When that
 is the case, the \texttt{:rex.w} keyword argument should be provided,
 with a value of \texttt{t}.
+
+\subsection{Encoding}
+
+The \texttt{:encoding} keyword argument to \texttt{define-instruction}
+is a list of the same length as the one supplied to
+\texttt{:operands}.  Each element of the list is an encoding.  For
+each operand, the encoding indicates how that operand is encoded in
+the binary version of the instruction.  Possible values for an
+encoding are:
+
+\begin{itemize}
+\item \texttt{modrm}.  This value indicates that the operand is encoded in the
+  ``mod'' and ``r/m'' fields of the instruction.  It should be used
+  when the corresponding entry in the Intel documentation indicates
+  r/m8, r/m16, r/m32, or r/m64.
+\item \texttt{reg}.  This value indicates that the operand is encoded
+  in the ``reg'' field of the instruction.  It should be used when the
+  corresponding entry in the Intel documentation indicates r8, r16,
+  r32, or r64.
+\end{itemize}
