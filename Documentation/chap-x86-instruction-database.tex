@@ -98,4 +98,23 @@ encoding are:
   in the ``reg'' field of the instruction.  It should be used when the
   corresponding entry in the Intel documentation indicates r8, r16,
   r32, or r64.
+\item \texttt{imm}.  This value indicates that the operand is encoded
+  as an immediate value in the instruction stream.  It should be used
+  when the corresponding operand in the \texttt{:operands} keyword
+  argument mentions \texttt{(imm 8)}, \texttt{(imm 16)}, \texttt{(imm
+    32)}, or \texttt{(imm 64)}.
+\item \texttt{label}.  This value indicates that the corresponding
+  operand is the target of a control-transfer instruction.  It should
+  be used when the corresponding operand in the \texttt{:operands}
+  keyword argument mentions \texttt{(label 8)}, \texttt{(label 16)},
+  \texttt{(label 32)}, or \texttt{(label 64)}.
+\item \texttt{-}.  This value indicates that the corresponding operand
+  is implicitly defined by the opcode, which is often the case when
+  general-purpose register A is one of the operands of the
+  instruction.
+\item \texttt{+r}.  This value use used in some cases when the
+  corresponding operand is a register.  It means that some small
+  integer that indicates a register is added to the opcode itself.
+  This value should be used when the Intel documentation has a +rb,
+  +rw, or +rd in the opcode column.
 \end{itemize}
