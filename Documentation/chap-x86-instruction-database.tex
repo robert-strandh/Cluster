@@ -118,3 +118,15 @@ encoding are:
   This value should be used when the Intel documentation has a +rb,
   +rw, or +rd in the opcode column.
 \end{itemize}
+
+\subsection{Operand-size override}
+
+The keyword argument \texttt{:operand-size-override} to
+\texttt{define-instruction} is required to have a true value when the
+particular operand requires an instruction prefix in order for that
+size operand to be used.  In 32-bit and 63-bit mode, the default
+operand size is 32-bits, so for instance if the \texttt{push}
+instruction is to be given a 16-bit value instead of a 32-bit value in
+one of these modes, then the operand-size-override prefix must be
+given.  For this prefix to be emitted, this keyword must be supplied
+with a true value.
