@@ -130,3 +130,10 @@ instruction is to be given a 16-bit value instead of a 32-bit value in
 one of these modes, then the operand-size-override prefix must be
 given.  For this prefix to be emitted, this keyword must be supplied
 with a true value.
+
+\subsection{Atomic execution}
+
+When the instruction supports atomic execution, the keyword
+\texttt{:lock} with a true argument should be given to
+\texttt{define-instruction}.  This value then indicates that the
+instruction is capable of executing atomically.
