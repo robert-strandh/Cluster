@@ -137,3 +137,10 @@ When the instruction supports atomic execution, the keyword
 \texttt{:lock} with a true argument should be given to
 \texttt{define-instruction}.  This value then indicates that the
 instruction is capable of executing atomically.
+
+\subsection{64-bit prefix}
+
+In order to access more than 8 registers, Intel instructions require a
+prefix called REX.W.  When the Intel documentation mentions this
+prefix in the opcode column, the keyword argument \texttt{rex.w}
+whould be supplied to \texttt{define-instruction} with a true value.
