@@ -27,6 +27,19 @@ the Intel manuals.  Here, we give a more direct description of the
 correspondence between the Intel reference pages and the arguments
 that should be supplied to the \texttt{define-instruction} macro.
 
+\subsection{Modes}
+
+The Intel documentation contains two columns mentioning \emph{modes}.
+One column says ``64-bit Mode'' and the other says ``Compat/Leg Mode''
+(which means compatibility or legacy mode).  This information is
+reflected in the keyword argument \texttt{:modes} to
+\texttt{define-instruction}.  The value of this keyword argument is a
+list of one or two elements each of which is either the integer 32 or
+the integer 64.  When the Intel documentation mentions ``Valid'' in
+the column ``64-bit Mode'' the list should contain 64.  When the
+column ``Compat/Leg Mode'' mentions ``Valid'', then the list should
+contain 32.
+
 \subsection{Operands}
 
 The \texttt{define-instruction} macro has a keyword argument
