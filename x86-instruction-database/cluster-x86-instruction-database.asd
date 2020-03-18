@@ -13,6 +13,7 @@
    (:file "and")
    (:file "call")
    (:file "cmp")
+   (:file "div")
    (:file "jcc")
    (:file "jmp")
    (:file "mov")
