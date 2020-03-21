@@ -100,5 +100,6 @@
                             collect
                             (let ((*instruction-pointer* (+ address size)))
                               (compute-encoding item)))))
-      (coerce (reduce #'append encodings :from-end t)
-              '(simple-array (unsigned-byte 8) (*))))))
+      (values (coerce (reduce #'append encodings :from-end t)
+                      '(simple-array (unsigned-byte 8) (*)))
+              addresses))))
