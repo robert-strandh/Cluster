@@ -67,7 +67,7 @@
                 (null displacement))
            ;; We have only a base register.
            (multiple-value-bind (rex.b r/m)
-               (floor (code-number base-register) 8)
+               (floor base-register 8)
              (if (= r/m 4)
                  `(,rex.b
                    #b00000100  ; ModR/M byte.
@@ -83,7 +83,7 @@
                  `(,rex.b
                    #b01000100 ; ModR/M byte.
                    #b00100100 ; SIB byte.
-                   ,(encode-integer displacement 1))
+                   ,@(encode-integer displacement 1))
                  `(,rex.b
                    ,(+ #b01000000 r/m)
                    ,@(encode-integer displacement 1)))))
