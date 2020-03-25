@@ -88,7 +88,17 @@
          ,@(opcodes desc)
          ,(+ #b11000000
              (ash (opcode-extension desc) 3)
-             (mod (code-number operand) 8)))))))
+             (mod (code-number operand) 8))))
+      (+r
+       `(,@(if (operand-size-override desc) '(#x66) '())
+         ,@(if (rex.w desc)
+               (if (>= (code-number operand) 7)
+                   '(#b01001001)
+                   '(#b01001000))
+               (if (>= (code-number operand) 7)
+                   '(#b01000001)
+                   '()))
+         ,(+ (first (opcodes desc)) (code-number operand)))))))
 
 (defmethod encode-instruction-1 (desc (operand memory-operand))
   (let ((type (first (encoding desc))))
