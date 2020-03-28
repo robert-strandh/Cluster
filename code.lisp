@@ -98,7 +98,8 @@
                (if (>= (code-number operand) 7)
                    '(#b01000001)
                    '()))
-         ,(+ (first (opcodes desc)) (code-number operand)))))))
+         ,(+ (first (opcodes desc))
+             (mod (code-number operand) 8)))))))
 
 (defmethod encode-instruction-1 (desc (operand memory-operand))
   (let ((type (first (encoding desc))))
