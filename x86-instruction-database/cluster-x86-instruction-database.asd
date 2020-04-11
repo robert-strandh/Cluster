@@ -11,6 +11,7 @@
    (:file "adc")
    (:file "add")
    (:file "and")
+   (:file "bt")
    (:file "call")
    (:file "cmp")
    (:file "div")
