@@ -4,7 +4,8 @@
   :depends-on (:cluster)
   :serial t
   :components
-  ((:file "aaa")
+  ((:file "x86-set")
+   (:file "aaa")
    (:file "aad")
    (:file "aam")
    (:file "aas")
