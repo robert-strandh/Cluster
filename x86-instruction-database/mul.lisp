@@ -16,16 +16,16 @@
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 8) (gpr 8))
-  :opcodes (F6)
+  :opcodes (#xF6)
   :opcode-extension 4
   :encoding (- modrm))
-  
+
 ;;; Multiply the AL GPR (destination) by the contents of an 8-bit
 ;;; memory location (source), and store the result in the AX GPR.
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 8) (memory 8))
-  :opcodes (F6)
+  :opcodes (#xF6)
   :opcode-extension 4
   :encoding (- modrm))
 
@@ -48,7 +48,7 @@
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 16) (gpr 16))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm)
   :operand-size-override t)
@@ -58,7 +58,7 @@
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 16) (memory 16))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm)
   :operand-size-override t)
@@ -74,7 +74,7 @@
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 32) (gpr 32))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm))
 
@@ -83,7 +83,7 @@
 (define-instruction "MUL"
   :modes (32 64)
   :operands ((gpr-a 32) (memory 32))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm)
   :operand-size-override t)
@@ -99,7 +99,7 @@
 (define-instruction "MUL"
   :modes (64)
   :operands ((gpr-a 64) (gpr 64))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm)
   :operand-size-override t
@@ -110,7 +110,7 @@
 (define-instruction "MUL"
   :modes (64)
   :operands ((gpr-a 64) (memory 64))
-  :opcodes (F7)
+  :opcodes (#xF7)
   :opcode-extension 4
   :encoding (- modrm)
   :operand-size-override t
