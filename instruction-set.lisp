@@ -34,15 +34,6 @@ of the prefix."))
 (defun find-modifier-prefix (name)
   (gethash name *modifier-prefixes*))
 
-;;; TODO
-;;; the instruction set might generate a class
-;;; from the prefixes that have slots for
-;;; the prefix predicates
-;;; and the prefix opcode values
-;;; this way it's easy to make a unified predicate for
-;;; a range prefix without making 16 classes or something
-;;; and then having to make a predicate that responds to all of them
-;;; it also makes inspecting the decoder/interpreter state much easier
 (defgeneric opcode-range-start (range-prefix))
 (defgeneric opcode-range-end (range-prefix))
 (defclass range-prefix (prefix)
@@ -52,6 +43,14 @@ of the prefix."))
                       :reader opcode-range-end)
    (%prefix-name :initarg :prefix-name
                  :reader prefix-name)
+   (%bitflag-prefixes :initarg :bitflag-prefixes
+                       :reader bitflag-prefixes
+                       :initform '())))
+
+(defgeneric prefix-opcode-bitmask (bitflag-prefix))
+(defclass bitflag-prefix (prefix)
+  ((%prefix-opcode-bitmask :initarg :prefix-opcode-bitmask
+                           :reader prefix-opcode-bitmask)
    (%instruction-descriptor-predicate
     :initarg :instruction-descriptor-predicate
     :reader instruction-descriptor-predicate)))
@@ -60,17 +59,24 @@ of the prefix."))
 (defun find-range-prefix (name)
   (gethash name *range-prefixes*))
 
-(defmacro define-range-prefix (prefix-name prefix-predicate
-                               start end)
-  `(setf (gethash ',prefix-name *range-prefixes*)
-         (make-instance 'range-prefix
+(defmacro define-range-prefix
+    (prefix-name (start end) &body bitflag-prefix-pairs)
+  (flet ((make-bitflag-prefix-forms (bitflag-prefix-pairs)
+           (loop for pair in bitflag-prefix-pairs
+                 collect `(make-instance
+                           'bitflag-prefix
+                           :prefix-opcode-bitmask ',(first pair)
+                           :instruction-descriptor-predicate ',(second pair)))))
 
-                        :opcode-range-start ',start
-                        :opcode-range-end ',end
-                        :prefix-name ',prefix-name
-                        :instruction-descriptor-predicate
-                        ',instruction-descriptor-predicate)))
+    `(setf (gethash ',prefix-name *range-prefixes*)
+           (make-instance 'range-prefix
+                          :opcode-range-start ',start
+                          :opcode-range-end ',end
+                          :prefix-name ',prefix-name
+                          :bitflag-prefixes (list ,@(make-bitflag-prefix-forms
+                                                     bitflag-prefix-pairs))))))
 
+;;;
 
 
 (defclass instruction-set () ())
