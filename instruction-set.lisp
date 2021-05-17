@@ -19,7 +19,7 @@ of the prefix."))
 ;;; We may also need some way to validate the modifier prefix
 ;;; can be used with a given instruction.
 (defclass modifier-prefix (prefix interpreter-writable-prefix-mixin) ())
-(defgeneric prefix-opcode (modifier-prefix inter))
+(defgeneric prefix-opcode (modifier-prefix))
 
 (defparameter *modifier-prefixes* (make-hash-table))
 
@@ -160,6 +160,11 @@ types that are associated with this instruction-set."))
   (loop for modifier-prefix in (modifier-prefixes instruction-set)
         do (setf (aref array-table 0 (prefix-opcode modifier-prefix))
                  modifier-prefix))
+  (loop for range-prefix in (range-prefixes instruction-set)
+        do (loop for i from (opcode-range-start range-prefix)
+                 upto (opcode-range-end range-prefix)
+                 do (setf (aref array-table 0 i)
+                          range-prefix)))
   array-table)
 
 (defun make-opcode-table (starting-table instruction-set)
@@ -182,6 +187,7 @@ types that are associated with this instruction-set."))
 
 (defgeneric instruction-set (decoder-state))
 (defgeneric reset-state (decoder-state))
+(defgeneric select-from-candidates (decoder-state candidates))
 (defclass decoder-state () ())
 
 (defun prefix-slot-name<-prefix (prefix)
@@ -207,7 +213,7 @@ types that are associated with this instruction-set."))
 (defun decoder-register-slots<-range-prefixes (range-prefixes)
   (loop for prefix in range-prefixes
         collect `(,(prefix-value-slot-name<-prefix prefix)
-                  :accessor ,(prefix-value-slot-name<-prefix prefix)
+                  :accessor ,(prefix-value-slot-accessor<-prefix prefix)
                   :initform nil)))
 
 (defun bitflag-accessors<-range-prefixes (set range-prefixes)
@@ -229,7 +235,7 @@ types that are associated with this instruction-set."))
      :allocation :class)))
 
 (defun interpreter-state-class-name<-instruction-set (instruction-set)
-  (intern (format nil "~w-STATE" (set-name instruction-set))))
+  (intern (format nil "~a-STATE" (symbol-name (set-name instruction-set)))))
 
 (defun interpreter-state-class<-instruction-set (instruction-set direct-superclasses)
   `(defclass ,(interpreter-state-class-name<-instruction-set instruction-set)
@@ -255,10 +261,35 @@ types that are associated with this instruction-set."))
 
 (defun make-form-to-add-metadata-to-prefixes (instruction-set)
   `(let ((instruction-set (find-instruction-set ',(set-name instruction-set))))
-     (loop for prefix in (list (modifier-prefixes instruction-set)
-                               (range-prefixes instruction-set))
+     (loop for prefix in (modifier-prefixes instruction-set)
            do (setf (interpreter-state-writer prefix)
-                    (prefix-accessor-name<-prefix prefix)))))
+                    (prefix-accessor-name<-prefix prefix)))
+     (loop for prefix in (range-prefixes instruction-set)
+           do (setf (interpreter-state-writer prefix)
+                    (prefix-value-slot-accessor<-prefix prefix)))))
+
+(defun discriminator-test<-prefix (prefix state-var descriptor-var)
+  (let ((predicate-symbol (instruction-descriptor-predicate prefix)))
+    `(eq (,predicate-symbol ,state-var)
+         (,predicate-symbol ,descriptor-var))))
+
+(defun discriminator-method-definition<-instruction-set (instruction-set)
+  `(defmethod select-from-candidates
+       ((state ,(interpreter-state-class-name<-instruction-set instruction-set))
+        candidates)
+     (let ((remaining-candidates
+             (remove-if-not
+              (lambda (candidate)
+                (and
+                 ,@ (loop for prefix
+                            in (append (modifier-prefixes instruction-set)
+                                       (mapcan #'bitflag-prefixes
+                                               (range-prefixes instruction-set)))
+                          collect (discriminator-test<-prefix prefix 'state
+                                                              'candidate))))
+              candidates)))
+       (assert (= 1 (length remaining-candidates)))
+       (first remaining-candidates))))
 
 (defgeneric make-decoder/interpreter-state-definition
     (instruction-set direct-superclasses)
@@ -268,7 +299,8 @@ types that are associated with this instruction-set."))
        ,(reset-state-method-definition<-instruction-set instruction-set)
        ,@(bitflag-accessors<-range-prefixes instruction-set
                                             (range-prefixes instruction-set))
-       ,(make-form-to-add-metadata-to-prefixes instruction-set))))
+       ,(make-form-to-add-metadata-to-prefixes instruction-set)
+       ,(discriminator-method-definition<-instruction-set instruction-set))))
 
 (defmacro define-deocder/interpreter (instruction-set-name (&rest direct-superclasses))
   (make-decoder/interpreter-state-definition
