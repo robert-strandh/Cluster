@@ -7,11 +7,19 @@ of the prefix."))
 (defgeneric prefix-name (modifier-prefix))
 (defclass prefix () ())
 
-(defclass modifier-prefix (prefix) ())
-(defgeneric prefix-opcode (modifier-prefix))
+(defclass interpreter-writable-prefix-mixin ()
+  (;; Technically this is something the decoder/interpreter
+   ;; uses and should annotate these instances with, not really sure
+   ;; if it matters that they're here though.
+   (%interpreter-state-writer
+    :initarg :interpreter-state-writer
+    :accessor interpreter-state-writer)))
+
 ;;; TODO
 ;;; We may also need some way to validate the modifier prefix
 ;;; can be used with a given instruction.
+(defclass modifier-prefix (prefix interpreter-writable-prefix-mixin) ())
+(defgeneric prefix-opcode (modifier-prefix inter))
 
 (defparameter *modifier-prefixes* (make-hash-table))
 
@@ -36,7 +44,7 @@ of the prefix."))
 
 (defgeneric opcode-range-start (range-prefix))
 (defgeneric opcode-range-end (range-prefix))
-(defclass range-prefix (prefix)
+(defclass range-prefix (prefix interpreter-writable-prefix-mixin)
   ((%opcode-range-start :initarg :opcode-range-start
                         :reader opcode-range-start)
    (%opcode-range-end :initarg :opcode-range-end
@@ -45,7 +53,7 @@ of the prefix."))
                  :reader prefix-name)
    (%bitflag-prefixes :initarg :bitflag-prefixes
                        :reader bitflag-prefixes
-                       :initform '())))
+                      :initform '())))
 
 (defgeneric prefix-opcode-bitmask (bitflag-prefix))
 (defclass bitflag-prefix (prefix)
@@ -75,7 +83,6 @@ of the prefix."))
                           :prefix-name ',prefix-name
                           :bitflag-prefixes (list ,@(make-bitflag-prefix-forms
                                                      bitflag-prefix-pairs))))))
-
 ;;;
 
 
@@ -171,7 +178,7 @@ types that are associated with this instruction-set."))
      instruction-set)))
 
 ;;;;
-;;;; decoder interprete state mixin
+;;;; decoder/interpreter
 
 (defgeneric instruction-set (decoder-state))
 (defgeneric reset-state (decoder-state))
@@ -246,6 +253,13 @@ types that are associated with this instruction-set."))
               collect `(setf (,(prefix-value-slot-accessor<-prefix prefix) state)
                              0))))
 
+(defun make-form-to-add-metadata-to-prefixes (instruction-set)
+  `(let ((instruction-set (find-instruction-set ',(set-name instruction-set))))
+     (loop for prefix in (list (modifier-prefixes instruction-set)
+                               (range-prefixes instruction-set))
+           do (setf (interpreter-state-writer prefix)
+                    (prefix-accessor-name<-prefix prefix)))))
+
 (defgeneric make-decoder/interpreter-state-definition
     (instruction-set direct-superclasses)
   (:method ((instruction-set instruction-set) direct-superclasses)
@@ -253,7 +267,8 @@ types that are associated with this instruction-set."))
        ,(interpreter-state-class<-instruction-set instruction-set direct-superclasses)
        ,(reset-state-method-definition<-instruction-set instruction-set)
        ,@(bitflag-accessors<-range-prefixes instruction-set
-                                           (range-prefixes instruction-set)))))
+                                            (range-prefixes instruction-set))
+       ,(make-form-to-add-metadata-to-prefixes instruction-set))))
 
 (defmacro define-deocder/interpreter (instruction-set-name (&rest direct-superclasses))
   (make-decoder/interpreter-state-definition
