@@ -6,4 +6,5 @@
   :serial t
   :components
   ((:file "packages")
-   (:file "decoder-generator")))
+   (:file "decoder-generator")
+   (:file "table-interpreter")))
