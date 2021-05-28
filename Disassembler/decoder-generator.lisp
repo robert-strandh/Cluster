@@ -71,15 +71,16 @@
 
 (defgeneric instruction-set (decoder-state))
 (defgeneric reset-state (decoder-state))
-(defgeneric select-from-candidates (decoder-state candidates))
+(defgeneric narrow-down-candidates (decoder-state candidates))
 (defclass decoder-state () ())
 
 (defun prefix-slot-name<-prefix (prefix)
-  (intern (format nil "%~w" (c:prefix-name prefix))))
+  (intern (format nil "%~a" (c:prefix-name prefix))))
 
 (defun prefix-accessor-name<-prefix (prefix)
-  "Possibly redundant because of the prefix predicate."
-  (intern (format nil "~w-PRESENT-P" (c:prefix-name prefix))))
+  "This is not redundant, one is for the value of a prefix,
+this is for whether it has been set or not and returns a boolean."
+  (intern (format nil "~a-PRESENT-P" (c:prefix-name prefix))))
 
 (defun decoder-register-slots<-modifier-prefixes (modifier-prefixes)
   (loop for prefix in modifier-prefixes
@@ -89,16 +90,16 @@
                   :initform nil)))
 
 (defun prefix-value-slot-name<-prefix (prefix)
-  (intern (format nil "%~w-VALUE" (c:prefix-name prefix))))
+  (intern (format nil "%~a-VALUE" (c:prefix-name prefix))))
 
 (defun prefix-value-slot-accessor<-prefix (prefix)
-  (intern (format nil "~w-VALUE" (c:prefix-name prefix))))
+  (intern (format nil "~a-VALUE" (c:prefix-name prefix))))
 
 (defun decoder-register-slots<-range-prefixes (range-prefixes)
   (loop for prefix in range-prefixes
         collect `(,(prefix-value-slot-name<-prefix prefix)
                   :accessor ,(prefix-value-slot-accessor<-prefix prefix)
-                  :initform nil)))
+                  :initform 0)))
 
 (defun bitflag-accessors<-range-prefixes (set range-prefixes)
   (flet ((method-definition (set range-prefix prefix)
@@ -160,22 +161,19 @@
          (,predicate-symbol ,descriptor-var))))
 
 (defun discriminator-method-definition<-instruction-set (instruction-set)
-  `(defmethod select-from-candidates
+  `(defmethod narrow-down-candidates
        ((state ,(interpreter-state-class-name<-instruction-set instruction-set))
         candidates)
-     (let ((remaining-candidates
-             (remove-if-not
-              (lambda (candidate)
-                (and
-                 ,@ (loop for prefix
-                            in (append (c:modifier-prefixes instruction-set)
-                                       (mapcan #'c:bitflag-prefixes
-                                               (c:range-prefixes instruction-set)))
-                          collect (discriminator-test<-prefix prefix 'state
-                                                              'candidate))))
-              candidates)))
-       (assert (= 1 (length remaining-candidates)))
-       (first remaining-candidates))))
+     (remove-if-not
+      (lambda (candidate)
+        (and
+         ,@ (loop for prefix
+                    in (append (c:modifier-prefixes instruction-set)
+                               (mapcan #'c:bitflag-prefixes
+                                       (c:range-prefixes instruction-set)))
+                  collect (discriminator-test<-prefix prefix 'state
+                                                      'candidate))))
+      candidates)))
 
 (defgeneric make-decoder/interpreter-state-definition
     (instruction-set direct-superclasses)

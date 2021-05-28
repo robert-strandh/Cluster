@@ -8,7 +8,7 @@
 
 ;;;; This file has several problems at the minute
 ;;;; for instance we don't care at all for sign of displacment which is really bad.
-(declaim (inline modrm.mod modrm.rm rex.b rex.x sib.b sib.i sib.s))
+(declaim (inline modrm.mod modrm.reg modrm.rm rex.b rex.x rex.r sib.b sib.i sib.s))
 
 (defun modrm.mod (modrm)
   (ldb (byte 2 6) modrm))
@@ -16,11 +16,17 @@
 (defun modrm.rm (modrm)
   (ldb (byte 3 0) modrm))
 
+(defun modrm.reg (modrm)
+  (ldb (byte 3 3) modrm))
+
 (defun rex.b (rex)
   (ldb (byte 1 0) rex))
 
 (defun rex.x (rex)
   (ldb (byte 1 1) rex))
+
+(defun rex.r (rex)
+  (ldb (byte 1 2) rex))
 
 (defun sib.b (sib)
   (ldb (byte 3 0) sib))
@@ -40,7 +46,10 @@
                      current-byte)))
     result))
 
-(defun source-operand<-modrm (rex modrm vector position)
+(defun opcode-extension<-rex+modrm (rex modrm)
+  (+ (rex.r rex) (modrm.reg modrm)))
+
+(defun rm-operand<-modrm (rex modrm vector position)
   (flet ((base-register-number<-modrm+rex (modrm rex)
            (if (zerop rex)
                (modrm.rm modrm)
@@ -87,3 +96,9 @@
            (3 (cluster:make-gpr-operand
                (if (zerop rex) 32 64)
                (base-register-number<-modrm+rex modrm rex)))))))))
+
+(defgeneric operand-descriptor<-cluster-operand (operand)
+  (:method ((operand cluster::memory-operand))
+    `(cluster::memory ,(cluster:size operand)))
+  (:method ((operand cluster::gpr-operand))
+    `(cluster::gpr ,(cluster::size operand))))

@@ -12,11 +12,16 @@
    #:unknown-item
    #:item
 
+   ;; command
+   #:command
    ;; instruction-descriptor
    #:mnemonic
    #:operands
    #:opcodes
    #:encoding
+   #:opcode-extension
+   ;; operands
+   #:size
    ;; prefixes
    #:prefix
    #:modifier-prefix

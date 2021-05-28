@@ -7,4 +7,6 @@
   :components
   ((:file "packages")
    (:file "decoder-generator")
+   (:file "disassembled-command")
+   (:file "modrm")
    (:file "table-interpreter")))
