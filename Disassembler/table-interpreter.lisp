@@ -10,16 +10,43 @@
 
 (defmethod make-interpreter (array-table)
   (make-instance 'table-interpreter :dispatch-table array-table
-                 :state-object (make-instance 'x86-state)))
+                                    :state-object (make-instance 'x86-state)))
+
+;;; Would using Trivia would make this much easier to work with?
+(defun decode-single-descriptor-operands
+    (interpreter descriptor vector position)
+  (declare (ignore interpreter))
+  (cond ((and (assoc 'c:gpr-a (c:operands descriptor))
+              (or (assoc 'c:imm (c:operands descriptor))
+                  (assoc 'c:simm (c:operands descriptor))))
+         (let ((operands (decode-gpr-a-and-s/imm
+                          (cadr (assoc 'c:gpr-a (c:operands descriptor)))
+                          (cadr (or (assoc 'c:simm (c:operands descriptor))
+                                   (assoc 'c:imm (c:operands descriptor))))
+                          vector position)))
+           (make-disassembled-command descriptor
+                                      operands)))))
 
 
 (defun decode-from-descriptor (interpreter vector start-position position
                                instruction-descriptor)
-  (declare (ignore interpreter vector start-position position instruction-descriptor))
-  (error "Not implemented but wohoo."))
+  (declare (ignore start-position))
+  (decode-single-descriptor-operands interpreter instruction-descriptor vector position))
 
-;;;; This is here because of a dependence problem between the interpreter
-;;;; generator and the table-interpreter for rex only
+
+(defun narrow-down-candidates-from-operands (candidates operands
+                                             &key opcode-extension)
+  (remove-if-not
+   (lambda (candidate)
+     (and (= opcode-extension (cluster:opcode-extension candidate))
+          (null
+           (set-difference (cluster:operands candidate)
+                           (mapcan #'operand-descriptor<-cluster-operand
+                                   operands)))))
+   candidates))
+
+;;; This is here because of a dependence problem between the interpreter
+;;; generator and the table-interpreter for rex only
 (defgeneric rex-value (state))
 (defun try-decode-from-opcode-extension
     (interpreter vector start-position position candidates)
@@ -31,7 +58,7 @@
   (let ((modrm (aref vector position))
         (rex (rex-value (state-object interpreter))))
     (incf position)
-    (let* ((opcode-extension (opcode-extension<-rex+modrm rex modrm))
+    (let* ((opcode-extension (register-number<-rex+modrm rex modrm))
            (rm-operand (rm-operand<-modrm rex modrm vector position))
            (remaining-candidates
              (remove-if-not
@@ -44,6 +71,21 @@
               candidates)))
       (assert (= 1 (length remaining-candidates)))
       (make-disassembled-command (first remaining-candidates) (list rm-operand)))))
+
+(defun decode-instruction-with-register-operand
+    (interpreter vector position candidates)
+  (let ((modrm (prog1 (aref vector position) (incf position)))
+        (rex (rex-value (state-object interpreter))))
+    (let* ((operands (list (register-operand<-rex+modrm rex modrm)
+                           (rm-operand<-modrm rex modrm vector position)))
+           (remaining-candidates
+             (narrow-down-candidates-from-operands candidates operands)))
+      (assert (= 1 (length remaining-candidates)))
+      (make-disassembled-command (first remaining-candidates)
+                                 operands))))
+
+(defun decode-from-remaining-candidates
+    (interpreter vector start-position position candidates))
 
 (defmethod decode-instruction (interpreter vector start-position)
   (flet ((state-writer<-prefix (prefix)
@@ -74,8 +116,11 @@
                        interpreter vector start-position position
                        (first remaining-candidates)))
                     (return-from decode-instruction
-                      (try-decode-from-opcode-extension
-                       interpreter vector start-position position remaining-candidates)))))
+                      (if (not (null (cluster:opcode-extension (first remaining-candidates))))
+                          (try-decode-from-opcode-extension
+                           interpreter vector start-position position remaining-candidates)
+                          (decode-from-remaining-candidates
+                           interpreter vector start-position position remaining-candidates))))))
              (cluster:range-prefix
               (funcall (state-writer<-prefix lookup-value)
                        (aref vector position)

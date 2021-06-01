@@ -14,14 +14,21 @@
 
    ;; command
    #:command
+   #:compute-encoding
    ;; instruction-descriptor
    #:mnemonic
    #:operands
    #:opcodes
    #:encoding
    #:opcode-extension
+   #:operand-size-override
+   #:rex.w
    ;; operands
    #:size
+   #:gpr-a
+   #:imm
+   #:simm
+   #:value
    ;; prefixes
    #:prefix
    #:modifier-prefix

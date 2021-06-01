@@ -37,17 +37,25 @@
 (defun sib.s (sib)
   (ldb (byte 2 6) sib))
 
+(defun unsigned-to-signed (size unsigned-integer)
+  (let ((max+1 (expt 2 size)))
+    (if (>= unsigned-integer (ash max+1 -1))
+        (- unsigned-integer max+1)
+        unsigned-integer)))
+
 (defun read-from-array (size array position)
   (let ((result 0))
-    (loop for i from (- size 8) downto 0 by 8
+    (loop for i from 0 upto (- size 8) by 8
           for current-byte-position from position
           do (let ((current-byte (aref array current-byte-position)))
                (setf (ldb (byte 8 i) result)
                      current-byte)))
     result))
 
-(defun opcode-extension<-rex+modrm (rex modrm)
-  (+ (rex.r rex) (modrm.reg modrm)))
+(defun register-number<-rex+modrm (rex modrm)
+  (let ((modrm.reg (modrm.reg modrm)))
+    (setf (ldb (byte 1 3) modrm.reg) (rex.r rex))
+    modrm.reg))
 
 (defun rm-operand<-modrm (rex modrm vector position)
   (flet ((base-register-number<-modrm+rex (modrm rex)
@@ -96,6 +104,11 @@
            (3 (cluster:make-gpr-operand
                (if (zerop rex) 32 64)
                (base-register-number<-modrm+rex modrm rex)))))))))
+
+(defun register-operand<-rex+modrm (rex modrm)
+  (cluster:make-gpr-operand
+   (if (zerop rex) 32 64)
+   (register-number<-rex+modrm rex modrm)))
 
 (defgeneric operand-descriptor<-cluster-operand (operand)
   (:method ((operand cluster::memory-operand))
