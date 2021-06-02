@@ -26,9 +26,15 @@
    ;; operands
    #:size
    #:gpr-a
+   #:gpr
+   #:memory
    #:imm
    #:simm
    #:value
+   #:base-register
+   #:displacement
+   #:index-register
+   #:scale
    ;; prefixes
    #:prefix
    #:modifier-prefix
