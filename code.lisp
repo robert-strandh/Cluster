@@ -107,11 +107,11 @@
       (modrm
        (destructuring-bind (rex.xb modrm &rest rest)
            (encode-memory-operand operand)
-         (let ((rex-low (+ (if (rex.w operand) #b1000 0) rex.xb)))
+         (let ((rex-low (+ (if (rex.w desc) #b1000 0) rex.xb)))
            `(,@(if (operand-size-override desc) '(#x66) '())
              ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
              ,@(opcodes desc)
-             ,(logior modrm (ash (opcode-extension operand) 3))
+             ,(logior modrm (ash (opcode-extension desc) 3))
              ,@rest)))))))
 
 (defmethod encode-instruction-2
