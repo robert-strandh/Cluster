@@ -9,4 +9,5 @@
    (:file "decoder-generator")
    (:file "disassembled-command")
    (:file "modrm")
+   (:file "operand")
    (:file "table-interpreter")))

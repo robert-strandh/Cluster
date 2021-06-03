@@ -95,6 +95,7 @@
 
     (assert-decoded-descriptor disassembled-code-command
                                :mnemonic "ADD"
+                               :opcode-extension 0
                                :operands '((c:gpr 8) (c:imm 8)))
     (assert-immediate 127 disassembled-code-command))
 

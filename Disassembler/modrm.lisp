@@ -57,7 +57,7 @@
     (setf (ldb (byte 1 3) modrm.reg) (rex.r rex))
     modrm.reg))
 
-(defun rm-operand<-modrm (rex modrm vector position)
+(defun rm-operand<-size+rex+modrm (operand-size rex modrm vector position)
   (flet ((base-register-number<-modrm+rex (modrm rex)
            (if (zerop rex)
                (modrm.rm modrm)
@@ -80,7 +80,7 @@
                     nil
                     (let ((size (if (= 1 (modrm.rm modrm)) 8 32)))
                       (read-from-array size vector (1+ position))))))
-         (cluster:make-memory-operand (if (zerop rex) 32 64)
+         (cluster:make-memory-operand operand-size
                                       :base-register base
                                       :index-register index
                                       :scale (scale-factor<-sib sib)
@@ -89,7 +89,7 @@
        (flet ((read-indirect-with-displacement ()
                 (let ((displacement-size (if (= (modrm.mod modrm) 1) 8 32)))
                   (cluster:make-memory-operand
-                   (if (zerop rex) 32 64)
+                   operand-size
                    :base-register (base-register-number<-modrm+rex modrm rex)
                    :displacement (read-from-array displacement-size
                                                   vector
@@ -97,12 +97,12 @@
          (case (modrm.mod modrm)
            (0
             (cluster:make-memory-operand
-             (if (zerop rex) 32 64)
+             operand-size
              :base-register (base-register-number<-modrm+rex modrm rex)))
            (1 (read-indirect-with-displacement))
            (2 (read-indirect-with-displacement))
            (3 (cluster:make-gpr-operand
-               (if (zerop rex) 32 64)
+               operand-size
                (base-register-number<-modrm+rex modrm rex)))))))))
 
 (defun register-operand<-rex+modrm (rex modrm)
