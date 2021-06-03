@@ -72,7 +72,11 @@
 (defgeneric instruction-set (decoder-state))
 (defgeneric reset-state (decoder-state))
 (defgeneric narrow-down-candidates (decoder-state candidates))
-(defclass decoder-state () ())
+(defgeneric supported-mode (decoder-state))
+(defclass decoder-state ()
+  ((%supported-mode :initarg :supported-mode
+                    :reader supported-mode
+                    :initform 64)))
 
 (defun prefix-slot-name<-prefix (prefix)
   (intern (format nil "%~a" (c:prefix-name prefix))))
@@ -167,6 +171,7 @@ this is for whether it has been set or not and returns a boolean."
      (remove-if-not
       (lambda (candidate)
         (and
+         (member (supported-mode state) (c:modes candidate))
          ,@ (loop for prefix
                     in (append (c:modifier-prefixes instruction-set)
                                (mapcan #'c:bitflag-prefixes

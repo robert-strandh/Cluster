@@ -17,6 +17,7 @@
    #:compute-encoding
    ;; instruction-descriptor
    #:mnemonic
+   #:modes
    #:operands
    #:opcodes
    #:encoding
