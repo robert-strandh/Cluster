@@ -13,7 +13,7 @@
 
 (defun decode-instruction (instruction)
   (let ((interpreter (c.d::make-interpreter c.d::*x86-table*)))
-    (c.d::decode-instruction interpreter instruction 0)))
+    (c.d::decode-instruction interpreter instruction)))
 
 (defun assert-decoded-descriptor (instruction &key operand-size-override
                                                  opcode-extension
@@ -47,7 +47,6 @@
 (defun test-add-05 ()
   (let* ((add-ax-im16-300 (add-r-immediate 16 0 300))
          (disassembled-instruction (decode-instruction add-ax-im16-300)))
-
     (assert-decoded-descriptor disassembled-instruction
                                :operand-size-override t
                                :mnemonic "ADD"
@@ -78,7 +77,7 @@
     (assert-immediate -100000 disassembled-instruction)))
 
 
-(defun add-r/m8-immediate (r/m-operand immediate-value)
+(defun add-r/m-immediate (r/m-operand immediate-value)
   (let ((encoding
           (c:compute-encoding
            (c:make-code-command
@@ -88,7 +87,7 @@
     (make-array (length encoding) :initial-contents encoding)))
 
 (defun test-add-80 ()
-  (let* ((add-cl-127 (add-r/m8-immediate
+  (let* ((add-cl-127 (add-r/m-immediate
                       (cluster:make-gpr-operand 8 1)
                       127))
          (disassembled-code-command (decode-instruction add-cl-127)))
@@ -112,7 +111,36 @@
                                :operands '((c:gpr 8) (c:imm 8)))
     (assert-immediate 127 disassembled-code-command))  )
 (defun test-add-81 ())
-(defun test-add-83 ())
+
+(defun test-add-83 ()
+  ;; we need to test the following
+  ;; ADD r/m16, imm8
+  ;; ADD r/m32, imm8
+  ;; ADD r/m64, imm8
+  ;; ad these are breaking in the current path.
+  ;; aaa these are just wrong in general wtf...
+  (let* ((add-bx-3 (add-r/m-immediate
+                    (cluster:make-gpr-operand 16 3)
+                    3))
+         (disassembled-code-command (decode-instruction add-bx-3)))
+    (assert-decoded-descriptor disassembled-code-command
+                               :mnemonic "ADD"
+                               :opcode-extension 0
+                               :operands '((c:gpr 16) (c:simm 8))
+                               :operand-size-override t))
+  (let* ((add-m16-3 (add-r/m-immediate
+                     (cluster:make-memory-operand 16
+                                                  :base-register 3
+                                                  :index-register 0
+                                                  :scale 1
+                                                  :displacement 4)
+                    3))
+         (disassembled-code-command (decode-instruction add-m16-3)))
+    (assert-decoded-descriptor disassembled-code-command
+                               :mnemonic "ADD"
+                               :opcode-extension 0
+                               :operands '((c:memory 16) (c:simm 8))
+                               :operand-size-override t))  )
 (defun test-add-00 ())
 (defun test-add-01 ())
 (defun test-add-02 ())

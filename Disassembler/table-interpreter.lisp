@@ -1,8 +1,63 @@
 (cl:in-package #:cluster.disassembler)
 
+;;; more of a helper rather than a buffer
+;;; it uses the GF reset to reset the modrm byte that has been read.
+(defgeneric read-next-byte (buffer))
+(defgeneric modrm-byte (buffer))
+(defgeneric read-unsigned-integer (buffer size-in-bits))
+(defgeneric read-signed-integer (buffer size-in-bits))
+(defclass decoder-buffer ()
+  ((%source-sequence :initarg :source-sequence
+                     :reader source-sequence)
+   (%buffer-position :initarg :buffer-position
+                     :accessor buffer-position)
+   (%modrm-byte :reader modrm-byte :initform nil)))
+
+;;; This only exists because at the moment we create an interpreter
+;;; and hide the decoder buffer / only use it when we use GFs
+;;; on the interpreter accepting sequences
+(defgeneric use-sequence (buffer sequence &key start)
+  (:method ((buffer decoder-buffer) sequence &key (start 0))
+    (setf (slot-value buffer '%source-sequence) sequence)
+    (setf (buffer-position buffer) start)
+    nil))
+
+(defmethod read-next-byte ((buffer decoder-buffer))
+  (prog1 (elt (source-sequence buffer) (buffer-position buffer))
+    (incf (buffer-position buffer))))
+
+(defmethod modrm-byte :around ((buffer decoder-buffer))
+  (or (call-next-method)
+      (setf (slot-value buffer '%modrm-byte)
+            (read-next-byte buffer))))
+
+(defmethod read-unsigned-integer ((buffer decoder-buffer) size-in-bits)
+  (let ((result 0))
+    (loop for i from 0 upto (- size-in-bits 8) by 8
+          do (let ((current-byte (elt (source-sequence buffer)
+                                      (buffer-position buffer))))
+               (incf (buffer-position buffer))
+               (setf (ldb (byte 8 i) result)
+                     current-byte)))
+    result))
+
+(defun unsigned-to-signed (size unsigned-integer)
+  (let ((max+1 (expt 2 size)))
+    (if (>= unsigned-integer (ash max+1 -1))
+        (- unsigned-integer max+1)
+        unsigned-integer)))
+
+(defmethod read-signed-integer ((buffer decoder-buffer) size-in-bits)
+  (unsigned-to-signed size-in-bits (read-unsigned-integer buffer size-in-bits)))
+
+(defmethod reset ((buffer decoder-buffer))
+  (setf (slot-value buffer '%modrm-byte) nil))
+
 (defgeneric make-interpreter (table))
-(defgeneric decode-instruction (interpreter vector start-position))
-(defclass table-interpreter ()
+(defgeneric decode-instruction (interpreter sequence &key start))
+(defgeneric decode-sequence (interpreter sequence &key start end))
+
+(defclass table-interpreter (decoder-buffer)
   ((%dispatch-table :initarg :dispatch-table
                     :reader dispatch-table)
    (%state-object :initarg :state-object
@@ -12,167 +67,146 @@
   (make-instance 'table-interpreter :dispatch-table array-table
                                     :state-object (make-instance 'x86-state)))
 
-(defun decode-immediate-from-descritpor
-    (descriptor vector position)
-  (let ((immediate-size (cadr (or (assoc 'c:simm (c:operands descriptor))
-                                  (assoc 'c:imm  (c:operands descriptor))))))
-    (assert (not (null immediate-size)))
-    (c:make-immediate-operand (decode-immediate immediate-size vector position))))
-
-;;; Would using Trivia would make this much easier to work with?
-(defun decode-single-descriptor-operands
-    (interpreter descriptor vector position)
-  (declare (ignore interpreter))
-  (cond ((and (assoc 'c:gpr-a (c:operands descriptor))
-              (or (assoc 'c:imm (c:operands descriptor))
-                  (assoc 'c:simm (c:operands descriptor))))
-         (let ((operands (decode-gpr-a-and-s/imm
-                          (cadr (assoc 'c:gpr-a (c:operands descriptor)))
-                          (cadr (or (assoc 'c:simm (c:operands descriptor))
-                                    (assoc 'c:imm (c:operands descriptor))))
-                          vector position)))
-           (make-disassembled-command descriptor
-                                      operands)))))
-
-
-(defun decode-from-descriptor (interpreter vector start-position position
-                               instruction-descriptor)
-  (declare (ignore start-position))
-  (decode-single-descriptor-operands interpreter instruction-descriptor vector position))
-
-
-(defun narrow-down-candidates-from-operands (candidates operands)
-  (let ((operand-descriptors
-          (mapcar #'operand-descriptor<-cluster-operand operands)))
-    (remove-if-not
-     ;; Needs to test subset because there may be an immediate operand
-     ;; that has yet to be decoded.
-     (lambda (candidate)
-       (subsetp operand-descriptors (cluster:operands candidate) :test #'equal))
-     candidates)))
+(defmethod reset ((table-interpreter table-interpreter))
+  (call-next-method)
+  (reset (state-object table-interpreter)))
 
 ;;; This is here because of a dependence problem between the interpreter
 ;;; generator and the table-interpreter for rex only
 (defgeneric rex-value (state))
 
-;;; Note, the candidates will always have the same operand-size-override
-;;; and rex.w values bc of the way the interpreter works
-;;; it is simply a case of looking at their operand descriptors
-;;; and asserting that they are all the same size for r/m.
-(defun r/m-operand-size-from-candidates (candidates)
-  (flet ((descriptor-operand-size (desc)
-           (let ((size
-                   (cadr
-                    (or (assoc 'c:gpr    (c:operands desc))
-                        (assoc 'c:memory (c:operands desc))))))
-             (assert (not (null size)))
-             size)))
-    (let ((operand-size-of-first-descriptor
-            (descriptor-operand-size (first candidates))))
-      (assert (every (lambda (candidate)
-                       (= operand-size-of-first-descriptor
-                          (descriptor-operand-size candidate)))
-                     candidates))
-      operand-size-of-first-descriptor)))
+;;; we don't want to check if it is null here
+(defun operand-size<-operand-descriptor (desc)
+  (and (listp desc)
+       (cadr desc)))
 
-;;; We always assume that r/m operands are always the same size.
-;;; Which I think is a valid assumption to make since intel manual
-;;; only lists them together.
-(defun try-decode-from-opcode-extension
-    (interpreter vector start-position position candidates)
-  (declare (ignore start-position))
-  (unless (every (lambda (instruction-descriptor)
-                   (not (null (cluster:opcode-extension instruction-descriptor))))
-                 candidates)
-    (error "There are too manay candidates ~a for this instruction" candidates))
-  (let ((modrm (prog1 (aref vector position) (incf position)))
-        (rex (rex-value (state-object interpreter))))
-    (let* ((opcode-extension (register-number<-rex+modrm rex modrm))
-           (remaining-candidates
-             (remove-if-not
-              (lambda (candidate)
-                (= opcode-extension (cluster:opcode-extension candidate)))
-              candidates))
-           (r/m-operand-size (r/m-operand-size-from-candidates remaining-candidates))
-           (rm-operand
-             (rm-operand<-size+rex+modrm r/m-operand-size rex modrm vector position))
-           (remaining-candidates
-             (narrow-down-candidates-from-operands
-              remaining-candidates (list rm-operand))))
+(defun maybe-filter-candidates-via-opcode-extension (interpreter candidates)
+  (flet ((opcode-extensions-consistent-p (candidates)
+           (let ((opcode-extension-of-first-candidate
+                   (c:opcode-extension (first candidates))))
+             (every (lambda (candidate)
+                      (or (and (integerp opcode-extension-of-first-candidate)
+                               (integerp (c:opcode-extension candidate)))
+                          (and (null opcode-extension-of-first-candidate)
+                               (null (c:opcode-extension candidate)))))
+                    candidates)))
 
-      (assert (= 1 (length remaining-candidates)))
-      (let ((candidate (first remaining-candidates)))
-        ;; now we have to check if there is an immediate operand to also decode.
-        (if (equal (cluster:operands candidate)
-                   (list (operand-descriptor<-cluster-operand rm-operand)))
-            (make-disassembled-command candidate (list rm-operand))
-            ;; decode immediate
-            (let ((immediate
-                    (decode-immediate-from-descritpor candidate vector position)))
-              (make-disassembled-command candidate (list rm-operand immediate))))))))
+         (opcode-extension (interpreter)
+           (register-number<-rex+modrm (rex-value (state-object interpreter))
+                                       (modrm-byte interpreter))))
 
-(defun decode-instruction-with-register-operand
-    (interpreter vector position candidates)
-  (let ((modrm (prog1 (aref vector position) (incf position)))
-        (rex (rex-value (state-object interpreter)))
-        (r/m-size (r/m-operand-size-from-candidates candidates)))
-    (let* ((operands (list (register-operand<-rex+modrm rex modrm)
-                           (rm-operand<-size+rex+modrm r/m-size rex modrm
-                                                       vector position)))
-           (remaining-candidates
-             (narrow-down-candidates-from-operands candidates operands)))
-      (assert (= 1 (length remaining-candidates)))
-      (make-disassembled-command (first remaining-candidates)
-                                 operands))))
+    (let ((opcode-extension-of-first-candidate
+            (c:opcode-extension (first candidates))))
+      (unless (opcode-extensions-consistent-p candidates)
+        (error "There are too many candidates with conflicting
+opcode extensions to continue decoding."))
+      (if (not (null opcode-extension-of-first-candidate))
+          (let ((opcode-extension (opcode-extension interpreter)))
+            (remove-if-not
+             (lambda (candidate)
+               (= opcode-extension (cluster:opcode-extension candidate)))
+             candidates))
+          candidates))))
 
-(defun decode-from-remaining-candidates
-    (interpreter vector start-position position candidates)
-  (declare (ignore interpreter vector start-position position candidates))
-  (error "Not implemented"))
+(defun decode-operands (interpreter candidates)
+  (let ((operands '()))
+    (loop for operand-position from 0
+          while (< operand-position (length (c:operands (first candidates))))
+          do (let* ((first-candidate (first candidates))
+                    (first-candidate-operand
+                      (elt (c:operands first-candidate) operand-position))
+                    (first-candidate-encoding (elt (c:encoding first-candidate)
+                                                   operand-position))
+                    (first-candidate-operand-size
+                      (operand-size<-operand-descriptor first-candidate-operand)))
+               (assert (every (lambda (candidate)
+                                (and
+                                 ;; The encodoing of the operand
+                                 ;; must be the same for each candidate.
+                                 (equal first-candidate-encoding
+                                        (elt (c:encoding candidate)
+                                             operand-position))
+                                 ;; the operand size must also be the same
+                                 (eql
+                                  first-candidate-operand-size
+                                  (operand-size<-operand-descriptor
+                                   (elt (c:operands candidate)
+                                        operand-position)))))
+                              candidates))
+               (let ((operand
+                       (read-operand interpreter first-candidate-encoding
+                                     first-candidate-operand-size
+                                     candidates)))
+                 (push operand operands)
+                 (setf candidates
+                       (remove-if-not
+                        (lambda (candidate)
+                          (c:operand-matches-p
+                           operand
+                           (elt (cluster:operands candidate) operand-position)))
+                        candidates))
+                 (assert (not (null candidates))))))
+    (values (nreverse operands)
+            candidates)))
 
-(defmethod decode-instruction (interpreter vector start-position)
+(defun %decode-instruction-from-candidates (interpreter candidates)
+  (setf candidates (maybe-filter-candidates-via-opcode-extension
+                    interpreter candidates))
+  (multiple-value-bind (operands candidates)
+      (decode-operands interpreter candidates)
+    (assert (= 1 (length candidates)))
+    (make-disassembled-command (first candidates) operands)))
+
+(defun %decode-instruction (interpreter)
   (flet ((state-writer<-prefix (prefix)
            (fdefinition `(setf ,(cluster:interpreter-state-writer prefix)))))
-    (let ((position start-position)
+    (let ((start-position (buffer-position interpreter))
           (table-number 0))
+      (declare (ignore start-position)) ; use it later to annotate instructions
       (tagbody
        :start
-         (let ((lookup-value (aref (dispatch-table interpreter) table-number
-                                   (aref vector position))))
+         (let* ((opcode (read-next-byte interpreter) )
+                (lookup-value (aref (dispatch-table interpreter) table-number
+                                    opcode)))
            (when (eql :next-table lookup-value)
-             (incf position)
              (incf table-number)
              (go :start))
            (etypecase lookup-value
              (null
               (error "Invalid opcode."))
              (list
-              (incf position)
-              ;; probably want to call something that returns the instruction
-              ;; and wil call this as part of that process.
               (let ((remaining-candidates
                       (narrow-down-candidates (state-object interpreter)
                                               lookup-value)))
-                (cond
-                  ((= 1 (length remaining-candidates))
-                   (return-from decode-instruction
-                     (decode-from-descriptor
-                      interpreter vector start-position position
-                      (first remaining-candidates))))
-                  ((< 1 (length remaining-candidates))
-                   (return-from decode-instruction
-                     (if (not (null (cluster:opcode-extension (first remaining-candidates))))
-                         (try-decode-from-opcode-extension
-                          interpreter vector start-position position remaining-candidates)
-                         (decode-from-remaining-candidates
-                          interpreter vector start-position position remaining-candidates))))
-                  (t (error "There are no candidate instructions for this instruction")))))
+                (when (= 0 (length remaining-candidates))
+                  (error "There are no candidate instructions for this instruction"))
+                (return-from %decode-instruction
+                  (%decode-instruction-from-candidates interpreter remaining-candidates))))
              (cluster:range-prefix
               (funcall (state-writer<-prefix lookup-value)
-                       (aref vector position)
-                       (state-object interpreter)))
+                       opcode
+                       (state-object interpreter))
+              (go :start))
              (cluster:modifier-prefix
               (funcall (state-writer<-prefix lookup-value)
-                       t (state-object interpreter)))))
-         (incf position)
-         (go :start)))))
+                       t (state-object interpreter))
+              (go :start))))))))
+
+(defmethod decode-instruction (interpreter sequence &key (start 0))
+  (use-sequence interpreter sequence :start start)
+  (%decode-instruction interpreter))
+
+(defmethod decode-sequence ((interpreter table-interpreter) sequence
+                            &key (start 0) end)
+  (use-sequence interpreter sequence :start start)
+  (let ((position start)
+        (end (or end (length sequence)))
+        (disassembled-commands (make-array 8 :adjustable t :fill-pointer 0)))
+    (loop while (< position end)
+          do (multiple-value-bind
+                   (instruction next-position)
+                 (%decode-instruction interpreter)
+               (vector-push-extend instruction disassembled-commands)
+               (setf position next-position)
+               (reset interpreter)))
+    disassembled-commands))

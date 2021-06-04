@@ -24,6 +24,7 @@
    #:opcode-extension
    #:operand-size-override
    #:rex.w
+   #:operand-matches-p
    ;; operands
    #:size
    #:gpr-a
@@ -31,6 +32,9 @@
    #:memory
    #:imm
    #:simm
+   #:reg
+   #:modrm
+   #:-
    #:value
    #:base-register
    #:displacement
