@@ -70,7 +70,7 @@
 ;;;; descriptor from a list of candidates.
 
 (defgeneric instruction-set (decoder-state))
-(defgeneric reset-state (decoder-state))
+(defgeneric reset (decoder-state))
 (defgeneric narrow-down-candidates (decoder-state candidates))
 (defgeneric supported-mode (decoder-state))
 (defclass decoder-state ()
@@ -140,7 +140,7 @@ this is for whether it has been set or not and returns a boolean."
 ;;; TODO
 ;;; do we need a presentp for a range prefix?
 (defun reset-state-method-definition<-instruction-set (instruction-set)
-  `(defmethod reset-state ((state ,(interpreter-state-class-name<-instruction-set
+  `(defmethod reset ((state ,(interpreter-state-class-name<-instruction-set
                                     instruction-set)))
      ,@ (loop for prefix in (c:modifier-prefixes instruction-set)
               collect `(setf (,(prefix-accessor-name<-prefix prefix) state)

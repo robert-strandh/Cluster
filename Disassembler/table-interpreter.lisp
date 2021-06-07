@@ -61,7 +61,10 @@
   ((%dispatch-table :initarg :dispatch-table
                     :reader dispatch-table)
    (%state-object :initarg :state-object
-                  :reader state-object)))
+                  :reader state-object)
+   (%label-table :initarg :label-table
+                 :accessor label-table
+                 :initform (make-hash-table))))
 
 (defmethod make-interpreter (array-table)
   (make-instance 'table-interpreter :dispatch-table array-table
@@ -70,6 +73,23 @@
 (defmethod reset ((table-interpreter table-interpreter))
   (call-next-method)
   (reset (state-object table-interpreter)))
+
+;;; we might want to keep the instruction length
+;;; in the disassembled command object
+;;; from there we can insert lables after by
+;;; copying them to a new sequence and then
+;;; scan for any labels that aren't in the sequence or something
+;;; not sure though.
+(defgeneric intern-label (tracker displacement)
+  (:method ((tracker table-interpreter) displacement)
+    (let ((absolute-address
+            (+ displacement
+               ;; the buffer position will be pointing at the next
+               ;; instruction once it has been read
+               (buffer-position tracker))))
+      (or (gethash absolute-address (label-table tracker))
+          (setf (gethash absolute-address (label-table tracker))
+                (c:make-label))))))
 
 ;;; This is here because of a dependence problem between the interpreter
 ;;; generator and the table-interpreter for rex only
@@ -196,17 +216,28 @@ opcode extensions to continue decoding."))
   (use-sequence interpreter sequence :start start)
   (%decode-instruction interpreter))
 
+(defun insert-labels (interpreter disassembled-commands)
+  (let ((labeled-commands
+          (make-array (+ (length disassembled-commands)
+                         (hash-table-size (label-table interpreter)))
+                      :fill-pointer 0)))
+    (loop for command across disassembled-commands
+          for label = (gethash (start-position command) (label-table interpreter))
+          unless (null label) do (vector-push label labeled-commands)
+            do (vector-push command labeled-commands))
+    labeled-commands))
+
 (defmethod decode-sequence ((interpreter table-interpreter) sequence
                             &key (start 0) end)
+  (when (null end) (setf end (length sequence)))
   (use-sequence interpreter sequence :start start)
-  (let ((position start)
-        (end (or end (length sequence)))
+  (setf (label-table interpreter) (make-hash-table))
+  (let ((end (or end (length sequence)))
         (disassembled-commands (make-array 8 :adjustable t :fill-pointer 0)))
-    (loop while (< position end)
-          do (multiple-value-bind
-                   (instruction next-position)
-                 (%decode-instruction interpreter)
+    (loop while (< (buffer-position interpreter) end)
+          do (let ((start-position (buffer-position interpreter))
+                   (instruction (%decode-instruction interpreter)))
+               (setf (start-position instruction) start-position)
                (vector-push-extend instruction disassembled-commands)
-               (setf position next-position)
                (reset interpreter)))
-    disassembled-commands))
+    (insert-labels interpreter disassembled-commands)))

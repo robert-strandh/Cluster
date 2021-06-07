@@ -3,4 +3,9 @@
 (defpackage #:cluster.disassembler
   (:use #:common-lisp)
   (:local-nicknames
-   (#:c #:cluster)))
+   (#:c #:cluster))
+  (:export
+   #:make-interpreter
+   #:*x86-table*
+   #:decode-instruction
+   #:decode-sequence))

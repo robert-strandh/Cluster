@@ -10,13 +10,6 @@
                  (modrm.rm modrm-byte)
                  (+ (rex.b rex) (modrm.rm modrm-byte))))
 
-           (scale-factor<-sib (sib-byte)
-             (case (sib.s sib-byte)
-               (#b00 1)
-               (#b01 2)
-               (#b10 4)
-               (#b11 8)))
-
            (read-indirect-with-displacement (rex modrm-byte)
              (let ((displacement-size (if (= (modrm.mod modrm-byte) 1) 8 32)))
                (cluster:make-memory-operand
@@ -75,3 +68,12 @@
   (let ((gpr-a (assoc 'c:gpr-a (c:operands (first candidates)))))
     (assert (not (null gpr-a)))
     (c:make-gpr-operand (cadr gpr-a) 0)))
+
+(defmethod read-operand (buffer (encoding (eql 'c:label)) operand-size candidates)
+  (declare (ignore encoding candidates))
+  ;; Label does not mean RIP-relative addressing via modrm
+  ;; it means displacement immediatley following the instruction opcodes
+  ;; with no modrm/sib present.
+  ;; in the intel manual this is described as 'rel' (8, 16 or 32) in 3.1.1.3
+  (let ((displacement (read-signed-integer buffer 32)))
+    (intern-label buffer displacement)))

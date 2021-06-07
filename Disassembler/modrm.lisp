@@ -38,3 +38,10 @@
   (let ((modrm.reg (modrm.reg modrm)))
     (setf (ldb (byte 1 3) modrm.reg) (rex.r rex))
     modrm.reg))
+
+(defun scale-factor<-sib (sib-byte)
+  (case (sib.s sib-byte)
+    (#b00 1)
+    (#b01 2)
+    (#b10 4)
+    (#b11 8)))
