@@ -25,7 +25,7 @@
 ;;; Opcodes: E9
 
 (define-instruction "JMP"
-  :modes (32 64)
+  :modes (32)
   :operands ((label 16))
   :opcodes (#xE9)
   :encoding (label)
