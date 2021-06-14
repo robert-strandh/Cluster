@@ -85,8 +85,7 @@
   :operands ((gpr-a 32) (memory 32))
   :opcodes (#xF7)
   :opcode-extension 4
-  :encoding (- modrm)
-  :operand-size-override t)
+  :encoding (- modrm))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
