@@ -55,7 +55,7 @@
   :operands ((gpr 64) (gpr 64))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm)
+  :encoding (modrm reg)
   :rex.w t)
 
 (define-instruction "BT"
@@ -63,7 +63,7 @@
   :operands ((memory 64) (gpr 64))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm)
+  :encoding (modrm reg)
   :rex.w t)
 
 (define-instruction "BT"
@@ -71,21 +71,21 @@
   :operands ((gpr 32) (gpr 32))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm))
+  :encoding (modrm reg))
 
 (define-instruction "BT"
   :modes (32 64)
   :operands ((memory 32) (gpr 32))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm))
+  :encoding (modrm reg))
 
 (define-instruction "BT"
   :modes (32 64)
   :operands ((gpr 16) (gpr 16))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm)
+  :encoding (modrm reg)
   :operand-size-override t)
 
 (define-instruction "BT"
@@ -93,5 +93,5 @@
   :operands ((memory 16) (gpr 16))
   :opcodes (#x0F #xA3)
   :opcode-extension 4
-  :encoding (modrm regm)
+  :encoding (modrm reg)
   :operand-size-override t)
