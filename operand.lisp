@@ -96,7 +96,7 @@
                  `(,rex.b
                    #b10000100 ; ModR/M byte.
                    #b00100100 ; SIB byte.
-                   ,(encode-integer displacement 4))
+                   ,@(encode-integer displacement 4))
                  `(,rex.b
                    ,(+ #b10000000 r/m)
                    ,@(encode-integer displacement 4)))))
