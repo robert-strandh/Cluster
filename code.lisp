@@ -1,5 +1,6 @@
 (cl:in-package #:cluster)
 
+(defgeneric best-candidate-descriptor (code-command))
 (defclass code-command (command)
   ((%mnemonic :initarg :mnemonic :reader mnemonic)
    (%operands :initarg :operands :reader operands)))
@@ -9,7 +10,7 @@
     :mnemonic mnemonic
     :operands operands))
 
-(defmethod compute-encoding ((item code-command))
+(defmethod best-candidate-descriptor ((item code-command))
   (let* ((operands (operands item))
          (candidates (candidates (mnemonic item) operands)))
     (flet ((best-candidate (c1 c2)
@@ -23,8 +24,11 @@
                         (instruction-size c2 operands))
                      c1
                      c2))))
-      (encode-instruction (reduce #'best-candidate candidates)
-                          operands))))
+      (reduce #'best-candidate candidates))))
+
+(defmethod compute-encoding ((item code-command))
+  (encode-instruction (best-candidate-descriptor item)
+                      (operands item)))
 
 ;;; When the item is a CODE-COMMAND and it has a single operand of
 ;;; type LABEL, then the preliminary size is the MAXIMUM of the size
@@ -149,40 +153,61 @@
                 ,@(encode-integer (value operand2) length2))))))))))
 
 (defmethod encode-instruction-2
-  (desc (operand1 gpr-operand) (operand2 gpr-operand))
+    (desc (operand1 gpr-operand) (operand2 gpr-operand))
   (assert (or (equal (encoding desc) '(reg modrm))
-              (equal (encoding desc) '(modrm reg))))
+              (equal (encoding desc) '(modrm reg))
+              (equal (encoding desc) '(- modrm))))
   (when (equal (encoding desc) '(modrm reg))
     (rotatef operand1 operand2))
-  (multiple-value-bind (rex.b r/m)
-      (floor (code-number operand2) 8)
-    (multiple-value-bind (rex.r reg)
-        (floor (code-number operand1) 8)
-      (let ((rex-low (+ (if (rex.w desc) #b1000 0)
-                        (ash rex.r 2)
-                        rex.b)))
-        `(,@(if (operand-size-override desc) '(#x66) '())
-          ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
-          ,@(opcodes desc)
-          ,(+ #b11000000
-              (ash reg 3)
-              r/m))))))
+  (let ((type1 (first (encoding desc))))
+    (multiple-value-bind (rex.b r/m)
+        (floor (code-number operand2) 8)
+      (multiple-value-bind (rex.r reg)
+          (floor (code-number operand1) 8)
+        (let ((rex-low (+ (if (rex.w desc) #b1000 0)
+                          (ash rex.r 2)
+                          rex.b)))
+          (case type1
+            (-
+             `(,@(if (operand-size-override desc) '(#x66) '())
+               ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+               ,@(opcodes desc)
+               ,(+ (ash #b11 6)
+                   (ash (opcode-extension desc) 3)
+                   r/m)))
+            (t
+             `(,@(if (operand-size-override desc) '(#x66) '())
+               ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+               ,@(opcodes desc)
+               ,(+ #b11000000
+                   (ash reg 3)
+                   r/m)))))))))
 
 (defmethod encode-instruction-2
-  (desc (operand1 gpr-operand) (operand2 memory-operand))
-  (assert (equal (encoding desc) '(reg modrm)))
-  (destructuring-bind (rex.xb modrm &rest rest)
-      (encode-memory-operand operand2)
-    (multiple-value-bind (rex.r reg)
-        (floor (code-number operand1) 8)
-      (let ((rex-low (+ (if (rex.w desc) #b1000 0)
-                        rex.xb
-                        (ash rex.r 2))))
-        `(,@(if (operand-size-override desc) '(#x66) '())
-          ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
-          ,@(opcodes desc)
-          ,(logior modrm (ash reg 3))
-          ,@rest)))))
+    (desc (operand1 gpr-operand) (operand2 memory-operand))
+  (assert (or (equal (encoding desc) '(reg modrm))
+              (equal (encoding desc) '(- modrm))))
+  (let ((type1 (first (encoding desc))))
+    (destructuring-bind (rex.xb modrm &rest rest)
+        (encode-memory-operand operand2)
+      (multiple-value-bind (rex.r reg)
+          (floor (code-number operand1) 8)
+        (let ((rex-low (+ (if (rex.w desc) #b1000 0)
+                          rex.xb
+                          (ash rex.r 2))))
+          (case type1
+            (-
+             `(,@(if (operand-size-override desc) '(#x66) '())
+               ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+               ,@(opcodes desc)
+               ,(logior modrm (ash (opcode-extension desc) 3))
+               ,@rest))
+            (t
+             `(,@(if (operand-size-override desc) '(#x66) '())
+               ,@(if (plusp rex-low) `(,(+ #x40 rex-low)) '())
+               ,@(opcodes desc)
+               ,(logior modrm (ash reg 3))
+               ,@rest))))))))
 
 (defmethod encode-instruction-2
   (desc (operand1 memory-operand) (operand2 immediate-operand))
