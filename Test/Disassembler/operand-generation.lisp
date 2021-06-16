@@ -1,4 +1,4 @@
-(cl:in-package #:cluster-test.disassembler.generator)
+(cl:in-package #:cluster-test.disassembler)
 
 (defmethod generate-operand (generator (operand-descriptor (eql 'c:gpr))
                              encoding

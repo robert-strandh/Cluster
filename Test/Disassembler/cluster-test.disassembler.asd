@@ -6,4 +6,8 @@
   :components
   ((:file "packages")
    (:file "add")
-   (:file "jmp")))
+   (:file "jmp")
+   (:file "sequence")
+   (:file "command-generation")
+   (:file "operand-generation")
+   (:file "generation-test")))

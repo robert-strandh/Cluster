@@ -15,11 +15,16 @@
   (let ((interpreter (c.d::make-interpreter c.d::*x86-table*)))
     (c.d::decode-instruction interpreter instruction)))
 
+(defun decode-command-as-sequence (command)
+  (let ((interpreter (c.d:make-debug-interpreter c.d::*x86-table*
+                                                 (list command))))
+    (elt (c.d:decode-sequence interpreter (c:compute-encoding command)) 0)))
+
 (defun assert-decoded-descriptor (instruction &key operand-size-override
-                                                 opcode-extension
-                                                 mnemonic
-                                                 rex.w
-                                                 operands)
+                                                opcode-extension
+                                                mnemonic
+                                                rex.w
+                                                operands)
   (assert (eql operand-size-override (c:operand-size-override
                                       (c.d::instruction-descriptor instruction))))
   (assert (eql rex.w (c:rex.w
@@ -110,7 +115,31 @@
                                :mnemonic "ADD"
                                :operands '((c:gpr 8) (c:imm 8)))
     (assert-immediate 127 disassembled-code-command))  )
-(defun test-add-81 ())
+(defun test-add-81 ()
+  (let ((add-bx-16
+          (c:compute-encoding
+           (c:make-code-command
+            "ADD"
+            (list (c:make-gpr-operand 16 3)
+                  (c:make-immediate-operand (- (expt 2 16) 1)))))))
+    (assert-decoded-descriptor (decode-instruction add-bx-16)
+                               :mnemonic "ADD"
+                               :opcode-extension 0
+                               :operands '((c:gpr 16) (c:imm 16))
+                               :operand-size-override t))
+  (let ((add-memory-16
+          (c:compute-encoding
+           (c:make-code-command
+            "ADD"
+            (list (c:make-memory-operand 16
+                                         :index-register 3
+                                         :scale 4)
+                  (c:make-immediate-operand (- (expt 2 16) 1)))))))
+    (assert-decoded-descriptor (decode-instruction add-memory-16)
+                               :mnemonic "ADD"
+                               :opcode-extension 0
+                               :operands '((c:memory 16) (c:imm 16))
+                               :operand-size-override t)))
 
 (defun test-add-83 ()
   ;; we need to test the following
@@ -140,7 +169,7 @@
                                :mnemonic "ADD"
                                :opcode-extension 0
                                :operands '((c:memory 16) (c:simm 8))
-                               :operand-size-override t))  )
+                               :operand-size-override t)))
 (defun test-add-00 ())
 (defun test-add-01 ())
 (defun test-add-02 ())

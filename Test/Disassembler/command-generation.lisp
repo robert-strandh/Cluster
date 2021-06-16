@@ -1,4 +1,4 @@
-(cl:in-package #:cluster-test.disassembler.generator)
+(cl:in-package #:cluster-test.disassembler)
 
 (defclass code-command-generator ()
   ((%interned-labels :reader interned-labels
@@ -72,6 +72,7 @@
      (lambda (mnemonic candidates)
        (declare (ignore mnemonic))
        (loop for candidate in candidates
+             when (not (null (find 64 (c:modes candidate))))
              do (loop for i from 0 below variants-per-descriptor
                       for command = (generate-code-command generator candidate)
                       do (vector-push-extend command commands))))
