@@ -37,6 +37,24 @@
     :initarg :rex.w
     :reader rex.w)))
 
+;;; This is used to determine if the mnemonic
+;;; is an alias and the instructions are encoded
+;;; exactly the same way
+(defun instruction-descriptor-equal (desc1 desc2)
+  (and
+   (equal (modes desc1)                 (modes desc2))
+   (equal (operands desc1)              (operands desc2))
+   (equal (opcodes desc1)               (opcodes desc2))
+   (equal (opcode-extension desc1)      (opcode-extension desc2))
+   (equal (encoding desc1)              (encoding desc2))
+   (equal (lock desc1)                  (lock desc2))
+   (equal (operand-size-override desc1) (operand-size-override desc2))
+   (equal (rex.w desc1)                 (rex.w desc2))))
+
+(defmethod print-object ((object instruction-descriptor) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (format stream "~a ~a" (mnemonic object) (operands object))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Database of instruction descriptors.

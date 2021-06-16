@@ -15,6 +15,7 @@
    ;; command
    #:command
    #:compute-encoding
+   #:best-candidate-descriptor
    ;; instruction-descriptor
    #:mnemonic
    #:modes
@@ -24,6 +25,7 @@
    #:opcode-extension
    #:operand-size-override
    #:rex.w
+   #:instruction-descriptor-equal
    #:operand-matches-p
    ;; operands
    #:size

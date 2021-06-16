@@ -6,6 +6,7 @@
    (#:c #:cluster))
   (:export
    #:make-interpreter
+   #:make-debug-interpreter
    #:*x86-table*
    #:decode-instruction
    #:decode-sequence))

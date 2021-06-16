@@ -64,11 +64,46 @@
                   :reader state-object)
    (%label-table :initarg :label-table
                  :accessor label-table
-                 :initform (make-hash-table))))
+                 :initform (make-hash-table))
+   ;; the source commands used to produce the program being
+   ;; disassembled
+   (%command-tracking-debug :initarg :command-tracking-debug
+                            :accessor command-tracking-debug
+                            :initform nil)
+   ;; integer of command position in command-tracking-debug
+   (%current-command-debug-position
+    :initarg :current-command-debug-position
+    :accessor current-command-debug-position
+    :initform 0)))
+
+(defgeneric increment-command-debug (interpreter)
+  (:method ((interpreter table-interpreter))
+    (with-accessors ((command-tracking-debug command-tracking-debug)
+                     (current-command-debug-position
+                      current-command-debug-position))
+        interpreter
+      (incf current-command-debug-position)
+      (loop while (< (current-command-debug-position interpreter)
+                     (length (command-tracking-debug interpreter)))
+            for command = (current-command-debug interpreter)
+            while (typep command 'c:label)
+            do (incf current-command-debug-position)))))
+
+(defgeneric current-command-debug (interpreter)
+  (:method ((interpreter table-interpreter))
+    (elt (command-tracking-debug interpreter)
+         (current-command-debug-position interpreter))))
 
 (defmethod make-interpreter (array-table)
   (make-instance 'table-interpreter :dispatch-table array-table
                                     :state-object (make-instance 'x86-state)))
+
+(defun make-debug-interpreter (array-table debug-command-program)
+  (let ((interpreter (make-interpreter array-table)))
+    (setf (command-tracking-debug interpreter) debug-command-program)
+    (when (typep (current-command-debug interpreter) 'c:label)
+      (increment-command-debug interpreter))
+    interpreter))
 
 (defmethod reset ((table-interpreter table-interpreter))
   (call-next-method)
@@ -174,7 +209,11 @@ opcode extensions to continue decoding."))
                     interpreter candidates))
   (multiple-value-bind (operands candidates)
       (decode-operands interpreter candidates)
-    (assert (= 1 (length candidates)))
+    (assert (or (= 1 (length candidates))
+                (every (lambda (c)
+                         (c:instruction-descriptor-equal
+                          (first candidates) c))
+                       candidates)))
     (make-disassembled-command (first candidates) operands)))
 
 (defun %decode-instruction (interpreter)
@@ -239,5 +278,11 @@ opcode extensions to continue decoding."))
                    (instruction (%decode-instruction interpreter)))
                (setf (start-position instruction) start-position)
                (vector-push-extend instruction disassembled-commands)
+               (when (not (null (command-tracking-debug interpreter)))
+                 (assert (c:instruction-descriptor-equal
+                          (instruction-descriptor instruction)
+                          (c:best-candidate-descriptor
+                           (current-command-debug interpreter))))
+                 (increment-command-debug interpreter))
                (reset interpreter)))
     (insert-labels interpreter disassembled-commands)))
