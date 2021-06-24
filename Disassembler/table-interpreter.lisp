@@ -65,6 +65,9 @@
    (%label-table :initarg :label-table
                  :accessor label-table
                  :initform (make-hash-table))
+   ;; the last opcode-byte that was decoded
+   (%last-opcode-byte :accessor last-opcode-byte
+                      :initform nil)
    ;; the source commands used to produce the program being
    ;; disassembled
    (%command-tracking-debug :initarg :command-tracking-debug
@@ -228,6 +231,7 @@ opcode extensions to continue decoding."))
                 (lookup-value
                   (opcode-byte-candidates
                    (dispatch-table interpreter) table-number opcode)))
+           (setf (last-opcode-byte interpreter) opcode)
            (when (eql :next-table lookup-value)
              (incf table-number)
              (go :start))

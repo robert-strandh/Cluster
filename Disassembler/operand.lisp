@@ -77,3 +77,11 @@
   ;; in the intel manual this is described as 'rel' (8, 16 or 32) in 3.1.1.3
   (let ((displacement (read-signed-integer buffer 32)))
     (intern-label buffer displacement)))
+
+(defmethod read-operand (interpreter (encoding (eql 'c:+r)) operand-size candidates)
+  (declare (ignore encoding candidates))
+  (let ((register-number
+          (ldb (byte 3 0) (last-opcode-byte interpreter))))
+    (setf (ldb (byte 4 0) register-number)
+          (rex.b (rex-value (state-object interpreter))))
+    (c:make-gpr-operand operand-size register-number)))
