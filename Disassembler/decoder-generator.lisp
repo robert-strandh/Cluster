@@ -1,11 +1,25 @@
 (cl:in-package #:cluster.disassembler)
 
-;;;;
-;;;; table generator
-;;;; This takes a table, in the same format as the mnemonic table
-;;;; where instructions are interned by their first opcode.
-;;;; From this table, we generate the lookup tables for the interpreter
-;;;; to use.
+;;; The table that the interpreter uses to match opcodes to candidates
+;;; is indexed such that the column is the opcode-byte-position
+;;; in big endian order and the rows are the candidates for the
+;;; value of that opcode-byte.
+(declaim (inline opcode-byte-candidates))
+(defun opcode-byte-candidates (opcode-table opcode-position opcode-byte)
+  (aref opcode-table opcode-position opcode-byte))
+
+(declaim (inline (setf opcode-byte-candidates)))
+(defun (setf opcode-byte-candidates) (new-value opcode-table opcode-position
+                                      opcode-byte)
+  (setf (aref opcode-table opcode-position opcode-byte)
+        new-value))
+
+;;;
+;;; table generator
+;;; This takes a table, in the same format as the mnemonic table
+;;; where instructions are interned by their first opcode.
+;;; From this table, we generate the lookup table for the interpreter
+;;; to use with OPCODE-BYTE-CANDIDATES.
 (defun next-opcode-table-pass (opcode-byte-position existing-table)
   (let ((table (make-array 256 :initial-element nil))
         (old-copy (make-array 256 :initial-element nil)))
@@ -26,25 +40,48 @@
           else do (setf (aref old-copy i) (aref existing-table i)))
     (values table old-copy)))
 
-(defun array-table<-list-of-tables (tables)
-  (let ((array-table (make-array `(,(length tables) 256))))
+(defun opcode-table<-list-of-tables (tables)
+  (let ((opcode-table (make-array `(,(length tables) 256))))
     (loop for table in tables
           for i from 0
           do (loop for candidates across table
                    for j from 0
-                   do (setf (aref array-table i j) candidates)))
-    array-table))
+                   do (setf (aref opcode-table i j) candidates)))
+    opcode-table))
 
-(defun add-prefixes (array-table instruction-set)
+(defun add-prefixes (opcode-table instruction-set)
   (loop for modifier-prefix in (c:modifier-prefixes instruction-set)
-        do (setf (aref array-table 0 (c:prefix-opcode modifier-prefix))
+        do (setf (opcode-byte-candidates
+                  opcode-table 0 (c:prefix-opcode modifier-prefix))
                  modifier-prefix))
   (loop for range-prefix in (c:range-prefixes instruction-set)
         do (loop for i from (c:opcode-range-start range-prefix)
                  upto (c:opcode-range-end range-prefix)
-                 do (setf (aref array-table 0 i)
+                 do (setf (opcode-byte-candidates opcode-table 0 i)
                           range-prefix)))
-  array-table)
+  opcode-table)
+
+;;; Add the candidates to places where register operand is encoded
+;;; in the opcode of the instruction
+(defun add-opcode-encoded-operands (opcode-table
+                                    instruction-descriptors-by-first-opcode)
+  (flet ((opcode-encoded-operand-p (descriptor)
+           (member 'c:+r (c:encoding descriptor))))
+    (loop for descriptors across instruction-descriptors-by-first-opcode
+          do (dolist (desc descriptors)
+               (when (opcode-encoded-operand-p desc)
+                 ;; add the descriptor as a candidate to every possible
+                 ;; opcode value
+                 (loop for i from 0 below 8
+                       for opcode-byte = (+ (car (last (c:opcodes desc)))
+                                            i)
+                       do (pushnew
+                           desc
+                           (opcode-byte-candidates
+                            opcode-table
+                            (- (length (c:opcodes desc)) 1)
+                            opcode-byte)))))))
+  opcode-table)
 
 (defun make-opcode-table (starting-table instruction-set)
   (let ((previous-table '(:next-table))
@@ -57,9 +94,10 @@
                (push next-previous tables)
                (setf previous-table next-previous)
                (setf current-table next-table)))
-    (add-prefixes
-     (array-table<-list-of-tables (nreverse tables))
-     instruction-set)))
+    (let ((opcode-table (opcode-table<-list-of-tables (reverse tables))))
+      (add-prefixes opcode-table instruction-set)
+      (add-opcode-encoded-operands opcode-table starting-table))))
+
 
 ;;;;
 ;;;; decoder/interpreter

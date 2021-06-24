@@ -225,8 +225,9 @@ opcode extensions to continue decoding."))
       (tagbody
        :start
          (let* ((opcode (read-next-byte interpreter) )
-                (lookup-value (aref (dispatch-table interpreter) table-number
-                                    opcode)))
+                (lookup-value
+                  (opcode-byte-candidates
+                   (dispatch-table interpreter) table-number opcode)))
            (when (eql :next-table lookup-value)
              (incf table-number)
              (go :start))

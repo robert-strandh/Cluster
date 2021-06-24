@@ -36,6 +36,7 @@
    #:simm
    #:reg
    #:modrm
+   #:+r
    #:-
    #:value
    #:base-register
