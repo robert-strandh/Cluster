@@ -5,48 +5,7 @@
 (defmethod read-operand (interpreter (encoding (eql 'c:modrm)) operand-size
                          candidates)
   (declare (ignore encoding candidates))
-  (labels ((base-register-number<-modrm+rex (modrm-byte rex)
-             (if (zerop rex)
-                 (modrm.rm modrm-byte)
-                 (+ (rex.b rex) (modrm.rm modrm-byte))))
-
-           (read-indirect-with-displacement (rex modrm-byte)
-             (let ((displacement-size (if (= (modrm.mod modrm-byte) 1) 8 32)))
-               (cluster:make-memory-operand
-                operand-size
-                :base-register (base-register-number<-modrm+rex modrm-byte rex)
-                :displacement
-                (read-unsigned-integer interpreter displacement-size)))))
-    (let ((modrm-byte (modrm-byte interpreter))
-          (rex        (rex-value (state-object interpreter))))
-      (cond
-        ((= #b100 (modrm.rm modrm-byte))
-         (let* ((sib-byte (read-next-byte interpreter))
-                (index (+ (rex.x rex)
-                          (sib.i sib-byte)))
-                (base (+ (rex.b rex)
-                         (sib.b sib-byte)))
-                (displacement-size (if (= 1 (modrm.mod modrm-byte)) 8 32))
-                (displacement
-                  (if (= 0 (modrm.mod modrm-byte))
-                      nil
-                      (read-unsigned-integer interpreter displacement-size))))
-           (cluster:make-memory-operand operand-size
-                                        :base-register base
-                                        :index-register index
-                                        :scale (scale-factor<-sib sib-byte)
-                                        :displacement displacement)))
-        (t
-         (case (modrm.mod modrm-byte)
-           (0
-            (cluster:make-memory-operand
-             operand-size
-             :base-register (base-register-number<-modrm+rex modrm-byte rex)))
-           (1 (read-indirect-with-displacement rex modrm-byte))
-           (2 (read-indirect-with-displacement rex modrm-byte))
-           (3 (cluster:make-gpr-operand
-               operand-size
-               (base-register-number<-modrm+rex modrm-byte rex)))))))))
+  (decode-r/m-with-32/64-addressing interpreter operand-size))
 
 (defmethod read-operand (interpreter (encoding (eql 'c:reg)) operand-size
                          candidates)

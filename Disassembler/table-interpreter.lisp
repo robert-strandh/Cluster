@@ -101,6 +101,13 @@
   (make-instance 'table-interpreter :dispatch-table array-table
                                     :state-object (make-instance 'x86-state)))
 
+;;; TODO
+;;; I would like for the debug source code commands to be annotated
+;;; with their start positions in the assembled sequence that is to be
+;;; decoded so that when the assertion in the decoder loop that checks
+;;; that the code commands that are being created are equal to the ones
+;;; that were assembled fails, the person debuging can see exactly where the
+;;; discrepancy is.
 (defun make-debug-interpreter (array-table debug-command-program)
   (let ((interpreter (make-interpreter array-table)))
     (setf (command-tracking-debug interpreter) debug-command-program)

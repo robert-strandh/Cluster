@@ -148,6 +148,56 @@
                                :mnemonic "XOR"
                                :operands '((c:gpr 16) (c:gpr 16))
                                :operand-size-override t)))
+(defun test-pop-gpr ()
+  (let ((pop-gpr
+          (c:compute-encoding
+           (c:make-code-command
+            "POP"
+            (list (c:make-gpr-operand 16 4))))))
+    (assert-decoded-descriptor (decode-instruction pop-gpr)
+                               :mnemonic "POP"
+                               :operands '((c:gpr 16))
+                               :operand-size-override t)))
+
+;;; testing RIP with just index
+(defun test-cmp-mem-gpr ()
+  (let ((cmp-mem-gpr
+          (c:compute-encoding
+           (c:make-code-command
+            "CMP"
+            (list (c:make-gpr-operand 16 2)
+                  (c:make-memory-operand 16
+                                         :index-register 1
+                                         :scale 8))))))
+    (let ((decoded-instruction (decode-instruction cmp-mem-gpr)))
+      (assert-decoded-descriptor
+       decoded-instruction
+       :mnemonic "CMP"
+       :operands `((c:gpr 16) (c:memory 16))
+       :operand-size-override t)
+      (assert-memory-operand
+       (second (c:operands decoded-instruction))
+       :index-register 1
+       :scale 8
+       :size 16
+       :displacement 0))))
+
+;;; testing RIP with just displacement
+(defun test-sbb-mem-gpr ()
+  (let* ((sbb-mem-gpr
+           (c:compute-encoding
+            (c:make-code-command
+             "SBB"
+             (list  (c:make-memory-operand 8 :displacement -81)
+                    (c:make-gpr-operand 8 7)))))
+         (decoded-instruction (decode-instruction sbb-mem-gpr)))
+
+    (assert-decoded-descriptor decoded-instruction
+                               :mnemonic "SBB"
+                               :operands `((c:memory 8) (c:gpr 8)))
+    (assert-memory-operand (first (c:operands decoded-instruction))
+                           :size 8
+                           :displacement -81)))
 
 (test-operands-add-with-scale)
 (test-operands-add+disp8)
