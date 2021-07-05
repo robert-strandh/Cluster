@@ -61,7 +61,9 @@
                 (null index-register))
            ;; We have only a displacement.
            `(#b000
-             #b00000101
+             #b00000101 ; ModR/M byte.
+             ;; SIB byte to encode only displacement using RIP-relative addressing.
+             #b00100101
              ,@(encode-integer displacement 4)))
           ((and (null index-register)
                 (null displacement))
@@ -108,7 +110,7 @@
            (multiple-value-bind (rex.x i)
                (floor index-register 8)
              `(,(ash rex.x 1)
-               #b00000100 ; ModR/M byte.
+               #b00000101 ; ModR/M byte.
                ,(+ (ash (round (log scale 2)) 6)
                    (ash i 3)
                    #b101)
