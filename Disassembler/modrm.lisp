@@ -5,6 +5,7 @@
 ;;;; and you use MOD to figure out if there is a displacement, 8bit displacement
 ;;;; or 32bit displacement
 ;;;; See http://www.c-jump.com/CIS77/CPU/x86/lecture.html#X77_0090_addressing_modes
+;;;; See https://wiki.osdev.org/X86-64_Instruction_Encoding#ModR.2FM_and_SIB_bytes
 (declaim (inline modrm.mod modrm.reg modrm.rm rex.b rex.x rex.r sib.b sib.i sib.s))
 
 (defun modrm.mod (modrm)
@@ -63,7 +64,8 @@
     (let ((modrm-byte (modrm-byte interpreter))
           (rex        (rex-value (state-object interpreter))))
       (cond
-        ((= #b100 (modrm.rm modrm-byte))
+        ((and (= #b100 (modrm.rm modrm-byte))
+              (not (= #b11 (modrm.mod modrm-byte))))
          (let* ((sib-byte (read-next-byte interpreter))
                 (index (+ (ash (rex.x rex) 3)
                           (sib.i sib-byte)))
