@@ -100,7 +100,8 @@
                    #b00100100 ; SIB byte.
                    ,@(encode-integer displacement 4))
                  `(,rex.b
-                   ,(+ #b10000000 r/m)
+                   #b10000100 ; ModR/M byte.
+                   ,(+ #b00100000 r/m) ; SIB, only encode base register.
                    ,@(encode-integer displacement 4)))))
           ((null base-register)
            ;; The only encoding provided when there is no base
