@@ -50,7 +50,8 @@
   (labels ((base-register-number<-modrm+rex (modrm-byte rex)
              (if (zerop rex)
                  (modrm.rm modrm-byte)
-                 (+ (rex.b rex) (modrm.rm modrm-byte))))
+                 (+ (ash (rex.b rex) 3)
+                    (modrm.rm modrm-byte))))
 
            (read-indirect-with-displacement (rex modrm-byte)
              (let ((displacement-size (if (= (modrm.mod modrm-byte) 1) 8 32)))
@@ -64,27 +65,36 @@
       (cond
         ((= #b100 (modrm.rm modrm-byte))
          (let* ((sib-byte (read-next-byte interpreter))
-                (index (+ (rex.x rex)
+                (index (+ (ash (rex.x rex) 3)
                           (sib.i sib-byte)))
-                (base (+ (rex.b rex)
+                (base (+ (ash (rex.b rex) 3)
                          (sib.b sib-byte)))
                 (displacement-size (if (= 1 (modrm.mod modrm-byte)) 8 32))
                 (displacement
                   (if (= 0 (modrm.mod modrm-byte))
                       nil
                       (read-signed-integer interpreter displacement-size))))
-           (cluster:make-memory-operand operand-size
-                                        :base-register base
-                                        :index-register index
-                                        :scale (scale-factor<-sib sib-byte)
-                                        :displacement displacement)))
+           (if (= index #b0100)
+               ;; when REX.X/ModRM 0.100 then this means only the base
+               ;; register is encoded with a mandatory displacement
+               (c:make-memory-operand operand-size
+                                      :base-register base
+                                      :displacement displacement)
+               (cluster:make-memory-operand
+                operand-size
+                :base-register base
+                :index-register index
+                :scale (scale-factor<-sib sib-byte)
+                :displacement displacement))))
 
         ;; MOD 00, R/M 101
         ((and (= #b00 (modrm.mod modrm-byte))
               (= #b101 (modrm.rm modrm-byte)))
          (let* ((sib-byte (read-next-byte interpreter))
-                (index (+ (rex.x rex) (sib.i sib-byte)))
-                (base  (+ (rex.b rex) (sib.b sib-byte)))
+                (index (+ (ash (rex.x rex) 3)
+                          (sib.i sib-byte)))
+                (base  (+ (ash (rex.b rex) 3)
+                          (sib.b sib-byte)))
                 (scale (scale-factor<-sib sib-byte)))
            ;; do not encode the base register when BP or R13 is given
            ;; ie RIP/EIP addressing in long mode
