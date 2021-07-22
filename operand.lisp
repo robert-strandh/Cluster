@@ -70,12 +70,22 @@
            ;; We have only a base register.
            (multiple-value-bind (rex.b r/m)
                (floor base-register 8)
-             (if (= r/m 4)
-                 `(,rex.b
-                   #b00000100  ; ModR/M byte.
-                   #b00100100) ; SIB byte.
-                 `(,rex.b
-                   ,r/m))))
+             (cond
+               ((= r/m 4)
+                `(,rex.b
+                  #b00000100   ; ModR/M byte.
+                  #b00100100)) ; SIB byte.
+               ;; It is not possible to encode BP(5) or R13 as a base register
+               ;; using the above method, as that encoding is used
+               ;; for RIP relative addressing.
+               ;; We must instead encode a displacement of 0.
+               ((= r/m 5)
+                `(,rex.b
+                  #b01000101 ; ModR/M byte
+                  ,@(encode-integer 0 1)))
+               (t
+                `(,rex.b
+                  ,r/m)))))
           ((and (null index-register)
                 (typep displacement '(signed-byte 8)))
            ;; We have a base register and an 8-bit displacement.
