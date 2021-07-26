@@ -43,12 +43,13 @@
 
 (defmethod read-operand (buffer (encoding (eql 'c:label))
                          operand-descriptor candidates)
-  (declare (ignore encoding candidates operand-descriptor))
+  (declare (ignore encoding candidates))
   ;; Label does not mean RIP-relative addressing via modrm
   ;; it means displacement immediatley following the instruction opcodes
   ;; with no modrm/sib present.
   ;; in the intel manual this is described as 'rel' (8, 16 or 32) in 3.1.1.3
-  (let ((displacement (read-signed-integer buffer 32)))
+  (let ((displacement
+          (read-signed-integer buffer (%operand-size operand-descriptor))))
     (intern-label buffer displacement)))
 
 (defmethod read-operand (interpreter (encoding (eql 'c:+r))
