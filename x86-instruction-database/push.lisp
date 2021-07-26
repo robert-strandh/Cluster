@@ -138,17 +138,10 @@
   :encoding (imm)
   :operand-size-override t)
 
-;;; Onto the stack, push a 32-bit immediate value (source).
-(define-instruction "PUSH"
-  :modes (32)
-  :operands ((imm 32))
-  :opcodes (#x68)
-  :encoding (imm))
-
 ;;; Onto the stack, push a 32-bit immediate value sign-extened to 64
 ;;; bits (source).
 (define-instruction "PUSH"
-  :modes (64)
+  :modes (32 64)
   :operands ((imm 32))
   :opcodes (#x68)
   :encoding (imm))
