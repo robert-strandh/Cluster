@@ -200,7 +200,7 @@ opcode extensions to continue decoding."))
                               candidates))
                (let ((operand
                        (read-operand interpreter first-candidate-encoding
-                                     first-candidate-operand-size
+                                     first-candidate-operand
                                      candidates)))
                  (push operand operands)
                  (setf candidates
