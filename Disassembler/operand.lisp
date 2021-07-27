@@ -55,8 +55,8 @@
 (defmethod read-operand (interpreter (encoding (eql 'c:+r))
                          operand-descriptor candidates)
   (declare (ignore encoding candidates))
-  (let ((register-number
-          (ldb (byte 3 0) (last-opcode-byte interpreter))))
-    (setf (ldb (byte 4 0) register-number)
-          (rex.b (rex-value (state-object interpreter))))
-    (c:make-gpr-operand (%operand-size operand-descriptor) register-number)))
+  (c:make-gpr-operand
+   (%operand-size operand-descriptor)
+   (+ (ldb (byte 3 0) (last-opcode-byte interpreter))
+      (ash (rex.b (rex-value (state-object interpreter)))
+           3))))
