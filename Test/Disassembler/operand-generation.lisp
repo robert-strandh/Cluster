@@ -38,7 +38,12 @@
                   nil
                   (c.d::unsigned-to-signed
                    displacement-size-limit
-                   (random (expt 2 displacement-size-limit)))))))
+                   (random (expt 2 displacement-size-limit))))))
+
+         (random-gpr (gpr-limit &optional (exclude '()))
+           (loop for register-code = (random gpr-limit)
+                 while (member register-code exclude)
+                 finally (return register-code))))
 
     (let* ((gpr-random-limit (if (= operand-size 64) 16 8)))
       (case (random 4)
@@ -51,13 +56,13 @@
             :displacement (random-displacement t)))
         (2 (c:make-memory-operand
             operand-size
-            :index-register (random (1- gpr-random-limit))
+            :index-register (random-gpr (1- gpr-random-limit) '(4))
             :scale (random-scale)
             :displacement (random-displacement t)))
         (3 (c:make-memory-operand
             operand-size
             :base-register (random gpr-random-limit)
-            :index-register (random (1- gpr-random-limit))
+            :index-register (random-gpr (1- gpr-random-limit) '(4))
             :scale (random-scale)
             :displacement (random-displacement t)))))))
 

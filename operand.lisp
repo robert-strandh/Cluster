@@ -152,6 +152,9 @@
                (floor base-register 8)
              (multiple-value-bind (rex.x i)
                  (floor index-register 8)
+               (when (= index-register 4)
+                 (error "You can't use the stack pointer
+as the index register with a scale."))
                (if (typep displacement '(signed-byte 8))
                    `(,(+ (ash rex.x 1) rex.b)
                      #b01000100 ; ModR/M byte.

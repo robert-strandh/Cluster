@@ -295,6 +295,10 @@ opcode extensions to continue decoding."))
                           (instruction-descriptor instruction)
                           (c:best-candidate-descriptor
                            (current-command-debug interpreter))))
+                 (unless (typep (first (c:operands instruction)) 'c:label)
+                   (assert (equal (c:compute-encoding instruction)
+                                  (c:compute-encoding
+                                   (current-command-debug interpreter)))))
                  (increment-command-debug interpreter))
                (reset interpreter)))
     (insert-labels interpreter disassembled-commands)))

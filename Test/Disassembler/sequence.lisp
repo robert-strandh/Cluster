@@ -19,7 +19,9 @@
                (length disassembled-test-program)))
     (let ((re-assembled-program
             (cluster:assemble (coerce disassembled-test-program 'list))))
-      (assert (equal assembled-program re-assembled-program)))))
+      ;; coerced so don't have to write anything for array equality
+      (assert (equal (coerce assembled-program 'list)
+                     (coerce re-assembled-program 'list))))))
 
 ;;; we need something like this just with using labels
 ;;; and source tracking.
