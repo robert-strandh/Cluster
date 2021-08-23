@@ -1,9 +1,4 @@
 (cl:in-package #:cluster.disassembler)
-;;;; When modrm.rm is 4, then you use SIB mode.
-;;;; but but MOD still tells you the size of the displacement
-;;;; every other time R/M is using a source register
-;;;; and you use MOD to figure out if there is a displacement, 8bit displacement
-;;;; or 32bit displacement
 ;;;; See http://www.c-jump.com/CIS77/CPU/x86/lecture.html#X77_0090_addressing_modes
 ;;;; See https://wiki.osdev.org/X86-64_Instruction_Encoding#ModR.2FM_and_SIB_bytes
 (declaim (inline modrm.mod modrm.reg modrm.rm rex.b rex.x rex.r sib.b sib.i sib.s))
@@ -79,6 +74,7 @@
            (if (= index #b0100)
                ;; when REX.X/ModRM 0.100 then this means only the base
                ;; register is encoded with a mandatory displacement
+               ;; see SIB table.
                (c:make-memory-operand operand-size
                                       :base-register base
                                       :displacement displacement)

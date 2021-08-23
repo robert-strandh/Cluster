@@ -101,13 +101,6 @@
   (make-instance 'table-interpreter :dispatch-table array-table
                                     :state-object (make-instance 'x86-state)))
 
-;;; TODO
-;;; I would like for the debug source code commands to be annotated
-;;; with their start positions in the assembled sequence that is to be
-;;; decoded so that when the assertion in the decoder loop that checks
-;;; that the code commands that are being created are equal to the ones
-;;; that were assembled fails, the person debuging can see exactly where the
-;;; discrepancy is.
 (defun make-debug-interpreter (array-table debug-command-program)
   (let ((interpreter (make-interpreter array-table)))
     (setf (command-tracking-debug interpreter) debug-command-program)
@@ -119,12 +112,6 @@
   (call-next-method)
   (reset (state-object table-interpreter)))
 
-;;; we might want to keep the instruction length
-;;; in the disassembled command object
-;;; from there we can insert lables after by
-;;; copying them to a new sequence and then
-;;; scan for any labels that aren't in the sequence or something
-;;; not sure though.
 (defgeneric intern-label (tracker displacement)
   (:method ((tracker table-interpreter) displacement)
     (let ((absolute-address
@@ -135,10 +122,6 @@
       (or (gethash absolute-address (label-table tracker))
           (setf (gethash absolute-address (label-table tracker))
                 (c:make-label))))))
-
-;;; This is here because of a dependence problem between the interpreter
-;;; generator and the table-interpreter for rex only
-(defgeneric rex-value (state))
 
 ;;; we don't want to check if it is null here
 (defun operand-size<-operand-descriptor (desc)

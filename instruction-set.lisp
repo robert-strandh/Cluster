@@ -83,8 +83,6 @@ of the prefix."))
                           :prefix-name ',prefix-name
                           :bitflag-prefixes (list ,@(make-bitflag-prefix-forms
                                                      bitflag-prefix-pairs))))))
-;;;
-
 
 (defclass instruction-set () ())
 (defgeneric modifier-prefixes (instruction-set)

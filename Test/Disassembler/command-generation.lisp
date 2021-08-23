@@ -38,7 +38,7 @@
                     (aref commands (1- i))))
   commands)
 
-;;; honestly, this is a bit of a pain so what this does at the moment
+;;; honestly, this is a bit of a pain, so what this does at the moment
 ;;; is shuffles the labels and inserts them evenly across the
 ;;; sequence.
 (defgeneric insert-labels (generator commands)

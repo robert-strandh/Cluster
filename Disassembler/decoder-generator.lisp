@@ -111,6 +111,7 @@
 (defgeneric reset (decoder-state))
 (defgeneric narrow-down-candidates (decoder-state candidates))
 (defgeneric supported-mode (decoder-state))
+(defgeneric rex-value (decoder-state))
 (defclass decoder-state ()
   ((%supported-mode :initarg :supported-mode
                     :reader supported-mode
@@ -175,8 +176,6 @@ this is for whether it has been set or not and returns a boolean."
         (c:range-prefixes instruction-set))
        (decoder-state-slots instruction-set))))
 
-;;; TODO
-;;; do we need a presentp for a range prefix?
 (defun reset-state-method-definition<-instruction-set (instruction-set)
   `(defmethod reset ((state ,(interpreter-state-class-name<-instruction-set
                                     instruction-set)))
