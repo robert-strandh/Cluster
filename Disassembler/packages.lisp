@@ -9,4 +9,6 @@
    #:make-debug-interpreter
    #:*x86-table*
    #:decode-instruction
-   #:decode-sequence))
+   #:decode-sequence
+   #:instruction-descriptor
+   #:start-position))

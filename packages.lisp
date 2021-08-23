@@ -43,6 +43,7 @@
    #:displacement
    #:index-register
    #:scale
+   #:code-number
    ;; prefixes
    #:prefix
    #:modifier-prefix

@@ -5,9 +5,7 @@
   :serial t
   :components
   ((:file "packages")
-   (:file "add")
-   (:file "jmp")
-   (:file "sequence")
+   (:file "utils")
    (:file "command-generation")
    (:file "operand-generation")
    (:file "generation-test")))
