@@ -61,19 +61,31 @@
                 (null index-register))
            ;; We have only a displacement.
            `(#b000
-             #b00000101
+             #b00000101 ; ModR/M byte.
+             ;; SIB byte to encode only displacement using RIP-relative addressing.
+             #b00100101
              ,@(encode-integer displacement 4)))
           ((and (null index-register)
                 (null displacement))
            ;; We have only a base register.
            (multiple-value-bind (rex.b r/m)
                (floor base-register 8)
-             (if (= r/m 4)
-                 `(,rex.b
-                   #b00000100  ; ModR/M byte.
-                   #b00100100) ; SIB byte.
-                 `(,rex.b
-                   ,r/m))))
+             (cond
+               ((= r/m 4)
+                `(,rex.b
+                  #b00000100   ; ModR/M byte.
+                  #b00100100)) ; SIB byte.
+               ;; It is not possible to encode BP(5) or R13 as a base register
+               ;; using the above method, as that encoding is used
+               ;; for RIP relative addressing.
+               ;; We must instead encode a displacement of 0.
+               ((= r/m 5)
+                `(,rex.b
+                  #b01000101 ; ModR/M byte
+                  ,@(encode-integer 0 1)))
+               (t
+                `(,rex.b
+                  ,r/m)))))
           ((and (null index-register)
                 (typep displacement '(signed-byte 8)))
            ;; We have a base register and an 8-bit displacement.
@@ -96,9 +108,10 @@
                  `(,rex.b
                    #b10000100 ; ModR/M byte.
                    #b00100100 ; SIB byte.
-                   ,(encode-integer displacement 4))
+                   ,@(encode-integer displacement 4))
                  `(,rex.b
-                   ,(+ #b10000000 r/m)
+                   #b10000100 ; ModR/M byte.
+                   ,(+ #b00100000 r/m) ; SIB, only encode base register.
                    ,@(encode-integer displacement 4)))))
           ((null base-register)
            ;; The only encoding provided when there is no base
@@ -108,7 +121,7 @@
            (multiple-value-bind (rex.x i)
                (floor index-register 8)
              `(,(ash rex.x 1)
-               #b00000100 ; ModR/M byte.
+               #b00000101 ; ModR/M byte.
                ,(+ (ash (round (log scale 2)) 6)
                    (ash i 3)
                    #b101)
@@ -139,6 +152,9 @@
                (floor base-register 8)
              (multiple-value-bind (rex.x i)
                  (floor index-register 8)
+               (when (= index-register 4)
+                 (error "You can't use the stack pointer
+as the index register with a scale."))
                (if (typep displacement '(signed-byte 8))
                    `(,(+ (ash rex.x 1) rex.b)
                      #b01000100 ; ModR/M byte.

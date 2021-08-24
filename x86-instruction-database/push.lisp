@@ -8,7 +8,7 @@
 ;;;
 ;;; Onto the stack, push the contents of a GPR or a memory location
 ;;; (16/32/64) (source).
-;;; 
+;;;
 ;;; Opcodes: FF
 ;;; Opcode extension: 6
 
@@ -124,22 +124,6 @@
   :encoding (imm)
   :operand-size-override t)
 
-;;; Onto the stack, push an 8-bit immediate value, sign extended to 32
-;;; bits (source).
-(define-instruction "PUSH"
-  :modes (32)
-  :operands ((imm 8))
-  :opcodes (#x6A)
-  :encoding (imm))
-
-;;; Onto the stack, push an 8-bit immediate value, sign extended to 64
-;;; bits (source).
-(define-instruction "PUSH"
-  :modes (64)
-  :operands ((imm 8))
-  :opcodes (#x6A)
-  :encoding (imm))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Onto the stack, push an immediate value (16/32/64) (source).
@@ -154,17 +138,10 @@
   :encoding (imm)
   :operand-size-override t)
 
-;;; Onto the stack, push a 32-bit immediate value (source).
-(define-instruction "PUSH"
-  :modes (32)
-  :operands ((imm 32))
-  :opcodes (#x68)
-  :encoding (imm))
-
 ;;; Onto the stack, push a 32-bit immediate value sign-extened to 64
 ;;; bits (source).
 (define-instruction "PUSH"
-  :modes (64)
+  :modes (32 64)
   :operands ((imm 32))
   :opcodes (#x68)
   :encoding (imm))

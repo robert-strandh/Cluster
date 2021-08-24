@@ -17,6 +17,7 @@
    (:file "data")
    (:file "operand")
    (:file "instruction-descriptors")
+   (:file "instruction-set")
    (:file "code")
    (:file "assembler")
    (:file "print")

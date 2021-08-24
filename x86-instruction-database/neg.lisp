@@ -14,8 +14,7 @@
   :operands ((gpr 32))
   :opcodes (#xF7)
   :opcode-extension 3
-  :encoding (modrm)
-  :rex.w t)
+  :encoding (modrm))
 
 ;;; Negate a 32-bit memory location
 (define-instruction "NEG"
