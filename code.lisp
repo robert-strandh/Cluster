@@ -1,6 +1,7 @@
 (cl:in-package #:cluster)
 
 (defgeneric best-candidate-descriptor (code-command))
+
 (defclass code-command (command)
   ((%mnemonic :initarg :mnemonic :reader mnemonic)
    (%operands :initarg :operands :reader operands)))
