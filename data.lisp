@@ -1,10 +1,10 @@
 (cl:in-package #:cluster)
 
 (defclass data-command (command)
-  ())
+  ((%data-bytes :initarg :data-bytes :reader data-bytes)))
 
 (defmethod compute-encoding ((item data-command))
-  (error "can't handle data commands yet"))
+  (data-bytes item))
 
 ;;; Return a list of SIZE integers of type (UNSIGNED-BYTE 8) making up
 ;;; the representation of VALUE in a little-endian encoding, i.e., the
@@ -16,4 +16,4 @@
 	collect (ldb (byte 8 position) value)))
 
 (defmethod preliminary-size ((item data-command))
-  (error "can't handle data commands yet"))
+  (length (data-bytes item)))
