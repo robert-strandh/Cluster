@@ -41,6 +41,8 @@
 (defmethod preliminary-size ((item code-command))
   (let* ((operands (operands item))
          (candidates (candidates (mnemonic item) operands)))
+    (when (null candidates)
+      (error "No candidate instruction for command ~s" item))
     (reduce (if (and (= (length operands) 1)
                      (typep (first operands) 'label))
                 #'max
