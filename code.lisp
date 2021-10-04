@@ -14,6 +14,8 @@
 (defmethod best-candidate-descriptor ((item code-command))
   (let* ((operands (operands item))
          (candidates (candidates (mnemonic item) operands)))
+    (when (null candidates)
+      (error "No candidate instruction for command ~s" item))
     (flet ((best-candidate (c1 c2)
              (if (and (= (length operands) 1)
                       (typep (first operands) 'label))
