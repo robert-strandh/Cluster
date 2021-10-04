@@ -18,6 +18,7 @@
    (:file "div")
    (:file "jcc")
    (:file "jmp")
+   (:file "lea")
    (:file "mov")
    (:file "mul")
    (:file "neg")
