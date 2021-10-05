@@ -20,6 +20,7 @@
    (:file "jmp")
    (:file "lea")
    (:file "mov")
+   (:file "movsxd")
    (:file "mul")
    (:file "neg")
    (:file "or")
