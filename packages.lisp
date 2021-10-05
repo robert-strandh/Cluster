@@ -31,6 +31,7 @@
    ;; operands
    #:size
    #:gpr-a
+   #:gpr-c
    #:gpr
    #:memory
    #:imm
