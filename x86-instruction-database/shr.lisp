@@ -13,3 +13,13 @@
   :opcode-extension 5
   :encoding (modrm imm)
   :rex.w t)
+
+;;; Logically shift a 64-bit GPR (destination) right a number of
+;;; positions indicated by the contents of the CL register (source).
+(define-instruction "SHR"
+  :modes (64)
+  :operands ((gpr 64) (gpr-c 8))
+  :opcodes (#xD3)
+  :opcode-extension 5
+  :encoding (modrm -)
+  :rex.w t)
