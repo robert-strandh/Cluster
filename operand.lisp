@@ -183,6 +183,10 @@ as the index register with a scale."))
      (and (typep operand 'gpr-operand)
           (= (code-number operand) 0)
           (= (size operand) (cadr descriptor))))
+    (gpr-c
+     (and (typep operand 'gpr-operand)
+          (= (code-number operand) 2)
+          (= (size operand) (cadr descriptor))))
     (gpr
      (and (typep operand 'gpr-operand)
           (= (size operand) (cadr descriptor))))
