@@ -22,14 +22,14 @@ problem of having to define an input syntax for instructions.
   corresponding label defined.
 \end{itemize}
 
-\sysname{} is mainly meant to server as a \emph{backend} for
-compilers written in \commonlisp{}, but they can be compilers for any
-language.  With \sysname{}, the compiler does not need to turn
-instructions into surface syntax or S-expressions, only to have the
-assembler parse that output into some internal representation right
-away.  By avoiding this pair of unparsing/parsing step, the
-speed of the compilation process in improved a bit.  But the main
-reason for \sysname{} to avoid surface syntax is that it can easily
-become ambiguous over time, as more types of instructions and operands
-need to be expressed.  It is much easier to extend a \clos{} class to
-handle new situations as the arise.
+\sysname{} is mainly meant to server as a \emph{backend} for compilers
+written in \commonlisp{}, but they can be compilers for any language.
+With \sysname{}, the compiler does not need to turn instructions into
+surface syntax or S-expressions, only to have the assembler parse that
+output into some internal representation right away.  By avoiding this
+pair of unparsing/parsing step, the speed of the compilation process
+is slightly improved.  But the main reason for \sysname{} to avoid
+surface syntax is that it can easily become ambiguous over time, as
+more types of instructions and operands need to be expressed.  It is
+much easier to extend a \clos{} class to handle new situations as the
+arise.
